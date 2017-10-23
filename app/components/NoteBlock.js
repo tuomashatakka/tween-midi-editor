@@ -24,6 +24,7 @@ const mapBlockProperties = (state, props) => {
     },
     selected: state.editor.selected.indexOf(block.id) > -1,
     mode: state.tool.tool,
+    gridSize: state.editor.grid.size,
   }
 }
 
@@ -64,15 +65,25 @@ class NoteBlock extends React.Component {
 
   onDragStart (event) {
     this.props.select(event)
-    this.setState({ move: true, co: [ event.clientX, event.clientY ], delta: [ 0, 0, 0, 0 ] })
+    this.setState({
+      move: true,
+      co: [ event.clientX, event.clientY ],
+      delta: [ 0, 0, 0, 0 ]
+    })
     document.addEventListener('mousemove', this.onDrag)
     document.addEventListener('mouseup', this.onDragEnd)
   }
 
   onDrag (event) {
+    let g        = this.props.gridSize
     let [ x, y ] = this.state.co
-    let dx = event.clientX - x
-    let dy = event.clientY - y
+    let dx       = (event.clientX - x)
+    let dy       = event.clientY - y
+    let edge_x   = (dx % g) > g / 2 ? 1 : 0
+    let edge_y   = (dy % g) > g / 2 ? 1 : 0
+    dx = dx - dx % g + edge_x * g
+    dy = dy - dy % g + edge_y * g
+
     let delta = (this.props.mode === 'resize')
       ? [ 0, 0, dx, dy ]
       : [ dx, dy, 0, 0 ]

@@ -13,7 +13,9 @@ type RootType = {
 export default function Root({ store }: RootType) {
   return (
     <Provider store={store}>
-      <App dispatch={store.dispatch}>
+      <App
+        dispatch={store.dispatch}
+        grid={store.getState().editor.grid}>
         <ToolMenu />
         <Editor />
       </App>

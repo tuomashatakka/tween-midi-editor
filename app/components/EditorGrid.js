@@ -1,11 +1,19 @@
 // @flow
 import React from 'react'
 
+const getOffset = (offset) => {
+  return {
+    left: offset[0] + 'px',
+    top:  offset[1] + 'px',
+  }
+}
+
 type GridProperties = {
-  size: string,
+  size: number,
   weight?: string,
   vertical?: number,
   horizontal?: number,
+  offset?: Array<number>,
   sub?: number,
 }
 
@@ -18,7 +26,7 @@ const Grid = (props: GridProperties) => {
   let sub        = props.sub || 1
   let parts      = Array(sub).fill(horizontal / sub)
 
-  return <div className='background-grid'>
+  return <div className='background-grid' style={getOffset(props.offset)}>
     <svg className='grid-pattern' width="100%" height="100%">
 
       <defs>

@@ -6,6 +6,7 @@ import decorate from '../reducers/connector'
 import * as actions from '../actions/editor'
 import Block from '../components/NoteBlock'
 import EditorGrid from '../components/EditorGrid'
+import SnapGrid from '../utils/snapping'
 
 function getBlocks (state, note) {
   let blocks = state.editor.blocks
@@ -16,6 +17,9 @@ export class Editor extends Component {
   props: {
     addBlock: Function,
     blocks: Array<any>,
+    grid: {
+      size: number,
+    },
   }
   static actions   = require('../actions/editor')
   static store_key = 'editor'
@@ -34,17 +38,18 @@ export class Editor extends Component {
         y2: 128,
       },
       grid: {
-        x: 100,
-        y: 32,
+        x: this.props.grid.size * 4,
+        y: this.props.grid.size,
         sub: 4,
-      }
+        offset: [ 40, 0 ]
+      },
     }
   }
 
   render () {
     let note = this.state.visible.y2
     let grid = {
-      size: '2.4rem',
+      size: this.props.grid.size,
       vertical: this.state.grid.y,
       horizontal: this.state.grid.x,
       sub: this.state.grid.sub,
@@ -55,7 +60,7 @@ export class Editor extends Component {
     }
     let rows = []
     while (--note >= this.state.visible.y)
-      rows.push( <BoundRow key={note} note={note} /> )
+      rows.push( <BoundRow key={note} note={note} grid={grid} /> )
 
     return <div className='editor'>
       <div className='btn' onClick={() => this.props.addBlock({ note: 61 })}>
@@ -64,7 +69,7 @@ export class Editor extends Component {
 
       <article className='note-area'>
 
-        <EditorGrid {...grid} />
+        <EditorGrid {...grid} offset={this.state.grid.offset} />
         <div className='grid' style={gridStyle}>{rows}</div>
       </article>
 
@@ -77,31 +82,45 @@ export type RowType = {
   blocks: Array<BlockType>,
   addBlock: Function,
   clearSelection: Function,
+  grid: {
+    size: number,
+    vertical: number,
+    horizontal: number,
+    sub: number,
+  }
 }
 
 const NOTE_NAMES = [
-  'A',
+  'A ',
   'A#',
-  'B',
-  'C',
+  'B ',
+  'C ',
   'C#',
-  'D',
+  'D ',
   'D#',
-  'E',
-  'F',
+  'E ',
+  'F ',
   'F#',
-  'G',
+  'G ',
   'G#',
 ]
 
-const Row = ({ note, blocks, addBlock, clearSelection }: RowType) => {
+const Row = ({ grid, note, blocks, addBlock, clearSelection }: RowType) => {
   let n = note % 12
   let name   = NOTE_NAMES[n]
   if (n === 3) {
     let octave = (note - n) / 12 - 1
     name += ' ' + octave
   }
+  let h = grid.vertical + 'px'
+  let height = {
+    height: h,
+    minHeight: h,
+    maxHeight: h,
+    lineHeight: h,
+  }
   return <div
+    style={height}
     className='row'>
     <div
       onClick={() => addBlock({ note })}

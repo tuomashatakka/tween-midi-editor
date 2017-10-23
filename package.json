@@ -4,6 +4,7 @@
   "version": "0.12.0",
   "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
   "scripts": {
+    "al": "pm2 start npm -f --interpreter bash --name 'Renderer' -- run start-main-dev && pm2 start npm -f --interpreter bash --name 'Renderer' -- run start-renderer-dev",
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development node --trace-warnings -r babel-register ./node_modules/webpack/bin/webpack --config webpack.config.renderer.dev.dll.js --colors",
     "build-main": "cross-env NODE_ENV=production node --trace-warnings -r babel-register ./node_modules/webpack/bin/webpack --config webpack.config.main.prod.js --colors",

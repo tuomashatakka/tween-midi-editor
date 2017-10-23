@@ -21,16 +21,17 @@ export default class App extends Component {
 
   _resolveKey (event) {
     console.log(event.key, event.shiftKey)
+    let g = this.props.grid.size
     if (event.key === 'ArrowRight')
       if (event.shiftKey)
-        return this.props.dispatch(setBlockDuration(20))
+        return this.props.dispatch(setBlockDuration(g))
       else
-        return this.props.dispatch(setBlockStart(20))
+        return this.props.dispatch(setBlockStart(g))
     if (event.key === 'ArrowLeft')
       if (event.shiftKey)
-        return this.props.dispatch(setBlockDuration(-20))
+        return this.props.dispatch(setBlockDuration(-g))
       else
-        return this.props.dispatch(setBlockStart(-20))
+        return this.props.dispatch(setBlockStart(-g))
     if (event.key === 'ArrowUp')
       if (event.shiftKey)
         return this.props.dispatch(setBlockNote(12))

@@ -1,0 +1,158 @@
+
+@color-dark:         #2f2d3d;
+@color-primary:      #44394d;
+@color-primary-dark: #312838;
+
+@transition-duration: 0.3s;
+@transition-colors:
+  @transition-duration color,
+  @transition-duration background-color,
+  @transition-duration border-color;
+@transition-colors-in:
+  @transition-duration / 4 color,
+  @transition-duration / 4 background-color,
+  @transition-duration / 4 border-color;
+
+@base-background:            @color-dark;
+@button-background-hover:    darken(@color-dark, 5%);
+@button-background-selected: @color-primary;
+@button-background-active:   mix(@button-background-selected, @button-background-hover);
+
+@note-background-color: @color-primary;
+@note-text-color: lighten(@color-primary, 50%);
+@note-background-color-active: lighten(@color-primary, 15%);
+@note-text-color-active: lighten(@color-primary, 65%);
+
+@grid-color: @color-primary;
+
+body {
+  margin: 0;
+  position: relative;
+  color: white;
+  height: 100vh;
+  background-color: @base-background;
+  font-family: Omnes, Montserrat, Questrial, Gotham, Arial, Helvetica, Helvetica Neue, serif;
+  overflow-y: hidden;
+  user-select: none;
+}
+
+h2 {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: bold;
+  letter-spacing: -0.025em;
+  color: #fff;
+}
+
+section#root {
+  height: 100%;
+}
+
+ol, ul, li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: white;
+  opacity: 0.75;
+  text-decoration: none;
+
+  &:hover {
+    opacity: 1;
+    cursor: pointer }}
+
+.btn {
+  display: inline-block;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.8em;
+  border-radius: 2em;
+  padding: 0.5em 1.5em;
+  margin: 0 0.1em 0.1em 0;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: @transition-colors;
+
+  &.selected {
+    background-color: @button-background-selected;
+  }
+  &:hover {
+    transition-duration: @transition-duration / 4;
+    color: white;
+    background-color: @button-background-hover;
+  }
+  &.selected:hover {
+    background-color: @button-background-active }
+}
+
+
+
+.row {
+  @size:       2.4rem;
+  display:     flex;
+  height:      auto;
+  line-height: inherit;
+
+  .row-number {
+    flex:       0 0 @size;
+    transform:  translateX(-2.4rem);
+    text-align: center }
+
+  .row-content {
+    flex:     1 0;
+    position: relative }
+
+  .note {
+    transition:       @transition-colors, @transition-duration width, @transition-duration left, @transition-duration transform;
+    background-color: @note-background-color;
+    color:            @note-text-color;
+    min-width:        @size;
+    box-sizing:       content-box;
+    text-align:       center;
+    border-radius:    3px;
+    margin:   0 0 -1px 0;
+    padding:  0 1px 0 0;
+    top:      0;
+    bottom:   0;
+    display:  block;
+    position: absolute }
+
+  .note.selected {
+    background-color: @note-background-color-active;
+    color:            @note-text-color-active;
+  }
+}
+
+.note-area {
+  position: relative;
+  margin-left: 2.4rem;
+}
+
+.grid,
+.editor {
+  position: relative;
+}
+
+svg.grid-pattern,
+.background-grid {
+  top:      0;
+  left:     0;
+  right:    0;
+  bottom:   0;
+  position: absolute;
+}
+
+svg.grid-pattern {
+  width: 100%;
+  height: 100%;
+  .line {
+    fill: @grid-color;
+  }
+  .line.minor {
+    fill: fade(@grid-color, 33%);
+  }
+}

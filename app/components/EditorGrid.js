@@ -66,7 +66,6 @@ const Grid = (props: GridProperties) => {
 
 const mapState = (state, props) => {
   let grid = state.editor.grid
-  console.log("GRITH", grid)
   return grid
 }
 const mapDispatch = (dispatch, props) => ({})

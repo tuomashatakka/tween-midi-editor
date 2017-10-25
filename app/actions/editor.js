@@ -53,6 +53,12 @@ const blockDefaultProperties = {
   velocity: 100,
 }
 
+export const scaleHorizontal = (percent: number = 1) => ({
+  type: SCALE_HORIZONTAL,
+  label: LABEL_WORKSPACE,
+  params: { percent }
+})
+
 export const increaseResolution = (increment: number = 1) => ({
   type: INCREASE_RESOLUTION,
   label: LABEL_WORKSPACE,

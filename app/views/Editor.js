@@ -40,6 +40,8 @@ export class Editor extends Component {
         x2: 100,
         y2: 128,
       },
+      offset: [ 0, 0 ],
+      scale:  [ 1, 1 ],
       grid: {
         x: this.props.grid.size,
         y: this.props.grid.size,
@@ -47,6 +49,7 @@ export class Editor extends Component {
         offset: [ 40, 0 ]
       },
     }
+    this.pan = this.pan.bind(this)
   }
 
   serializeNotes () {
@@ -55,12 +58,46 @@ export class Editor extends Component {
     console.log(list.serialize())
   }
 
+  set editor (e) {
+    this._ed = e
+    document.removeEventListener('wheel', this.pan)
+    document.addEventListener('wheel', this.pan)
+  }
+
+  pan (ev) {
+    ev.preventDefault()
+    let delta = {
+      y: ev.deltaY,
+    }
+    let { offset: [ x, y ], scale: [ sx, sy ] } = this.state
+    if (ev.ctrlKey) {
+      let polarity = 0 < ev.wheelDelta
+      let factor = polarity * 0.03
+      let scale = [
+        sx + factor,
+        sy + factor,
+      ]
+      console.log(scale, this.props)
+      return this.props.scaleHorizontal(this.props.grid.horizontal + polarity) // this.setState({ scale })
+    }
+    let offset = [
+      x - ev.deltaX,
+      y - ev.deltaY
+    ]
+    // : [ sx, sy ]
+    this.setState({ offset })
+  }
+
   render () {
     let note = this.state.visible.y2
     let grid = this.props.grid
+    let h = grid.vertical * this.state.scale[1]
     let gridStyle = {
-      minHeight: this.props.grid.y,
-      lineHeight: this.props.grid.y + 'px',
+      minHeight: h + 'px',
+      lineHeight: h + 'px',
+    }
+    let transpose = {
+      transform: `translate(${this.state.offset.map(v=>v + 'px').join(',')})`
     }
     let rows = []
     while (--note >= this.state.visible.y)
@@ -82,13 +119,15 @@ export class Editor extends Component {
           Serialize (dev)
         </div>
       </section>
-
-      <article className='note-area'>
-
+      <article className='note-area' style={transpose}>
         <EditorGrid offset={[40, 0]} />
-        <div className='grid' style={gridStyle}>{rows}</div>
+        <div
+          className='grid'
+          style={gridStyle}
+          ref={ref  => ref && (this.editor = ref)}>
+          {rows}
+        </div>
       </article>
-
     </div>
   }
 }

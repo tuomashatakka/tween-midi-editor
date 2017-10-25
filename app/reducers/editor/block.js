@@ -1,4 +1,7 @@
 // @flow
+import type { Action } from '..'
+import type { BlockType } from '../../actions/editor'
+import type { EditorState } from '.'
 import {
   ADD_BLOCK,
   REMOVE_BLOCK,
@@ -10,16 +13,37 @@ import {
   SET_BLOCK_NOTE,
   SET_BLOCK_START,
   SET_BLOCK_DURATION,
-} from '../actions/editor'
-import type { BlockType } from '../actions/editor'
-import type { Action } from '.'
+} from '../../actions/editor'
 
-type EditorState = {
-  blocks?: Array<BlockType>,
+function getSelected (state) {
+  return state.blocks.filter(iter => state.selected.indexOf(iter.id) > -1)
 }
 
-export default function editor (state = {}, action: Action): EditorState {
+// eslint-disable-next-line complexity
+export default function block (state: EditorState = {}, action: Action): EditorState {
+
   let { type, params } = action
+
+  const updateEachSelected = (params) =>
+    getSelected(state).reduce((s, blk) =>
+    updateBlockProperties(s, blk.id, params), { ...state })
+
+  function updateBlockProperties (state, id, { properties = null, detail = {} }) {
+    let blocks = [ ...state.blocks ]
+    let index  = blocks.findIndex(iter => id === iter.id)
+    if (index === -1)
+      throw new ReferenceError(`Could not find a block with id ${id}.`)
+
+    let block = blocks.splice(index, 1)[0]
+    let attrs =  (detail.relative) ? Object.keys(properties).reduce((props, attr) => {
+      props[attr] += properties[attr]
+      return props
+    }, block.properties) : properties
+
+    Object.assign(block.properties, attrs)
+    block.properties.end = block.properties.start + block.properties.duration
+    return Object.assign({}, state, { blocks: [ block, ...blocks ] })
+  }
 
   let update = (block: BlockType | any | null = {}): EditorState => {
     let blocks = [ ...state.blocks ]
@@ -48,19 +72,13 @@ export default function editor (state = {}, action: Action): EditorState {
     return Object.assign({}, state, { blocks })
   }
 
-  if(SET_BLOCK_NOTE === type) {
-    let id = params.id || state.selected[0] //FIXME
-    let block  = state.blocks.find(iter => id === iter.id)
-    let properties = Object.assign({}, relative(block, 'note'))
-    return update({ id, properties })
-  }
-
-  if(SET_BLOCK_START === type) {
-    let id = params.id || state.selected[0] //FIXME
-    let block  = state.blocks.find(iter => id === iter.id)
-    let properties = Object.assign({}, relative(block, 'start'))
-    properties.end = properties.start + properties.duration
-    return update({ id, properties })
+  if (
+    (SET_BLOCK_NOTE === type) ||
+    (SET_BLOCK_DURATION === type) ||
+    (SET_BLOCK_START === type)) {
+    if (params.id)
+      return update({ id: params.id })
+    return updateEachSelected(params)
   }
 
   if(SET_BLOCK_DURATION === type) {

@@ -46,6 +46,12 @@ export class Editor extends Component {
     }
   }
 
+  serializeNotes () {
+    console.log(this.props)
+    let list = MIDIInstructionComposite.from(this.props.getState())
+    console.log(list.serialize())
+  }
+
   render () {
     let note = this.state.visible.y2
     let grid = {
@@ -63,9 +69,13 @@ export class Editor extends Component {
       rows.push( <BoundRow key={note} note={note} grid={grid} /> )
 
     return <div className='editor'>
-      <div className='btn' onClick={() => this.props.addBlock({ note: 61 })}>
-        Add
-      </div>
+        <div className='btn' onClick={ this.props.addBlock.bind(this, { note: 61 }) }>
+          Add
+        </div>
+        <div className='btn' onClick={ this.serializeNotes.bind(this, { note: 61 }) }>
+          Serialize (dev)
+        </div>
+      </section>
 
       <article className='note-area'>
 
@@ -105,9 +115,9 @@ const NOTE_NAMES = [
   'G#',
 ]
 
-const Row = ({ grid, note, blocks, addBlock, clearSelection }: RowType) => {
-  let n = note % 12
-  let name   = NOTE_NAMES[n]
+function getNoteName (note: number): string {
+  let n    = note % 12
+  let name = NOTE_NAMES[n]
   if (n === 3) {
     let octave = (note - n) / 12 - 1
     name += ' ' + octave

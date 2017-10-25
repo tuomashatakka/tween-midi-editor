@@ -7,6 +7,7 @@ import tool from './tool'
 export type Action = {
   +type: string,
   +params: object,
+  label?: string,
 }
 
 const reducer = combineReducers({

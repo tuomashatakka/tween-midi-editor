@@ -109,7 +109,7 @@ class NoteBlock extends React.Component {
     return <span
       className={className}
       onMouseDown={this.onDragStart}
-      onClick={block.select}
+      onClick={(e) => e.stopPropagation()}
       style={getBlockPosition(block, this.state.delta)}
       key={block.id}>
       {block.properties.note}

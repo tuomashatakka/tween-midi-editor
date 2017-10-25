@@ -1,4 +1,5 @@
 // @flow
+import Note from '../models/Note'
 
 export const ADD_BLOCK          = 'ADD_BLOCK'
 export const REMOVE_BLOCK       = 'REMOVE_BLOCK'
@@ -14,13 +15,21 @@ export const SET_BLOCK_START    = 'SET_BLOCK_START'
 export const SET_BLOCK_DURATION = 'SET_BLOCK_DURATION'
 export const SET_BLOCK_VELOCITY = 'SET_BLOCK_VELOCITY'
 
-export const SCALE_UNIFORM = 'SCALE_UNIFORM'
-export const SCALE_VERTICAL = 'SCALE_VERTICAL'
-export const SCALE_HORIZONTAL = 'SCALE_HORIZONTAL'
+export const SCALE_UNIFORM      = 'SCALE_UNIFORM'
+export const SCALE_VERTICAL     = 'SCALE_VERTICAL'
+export const SCALE_HORIZONTAL   = 'SCALE_HORIZONTAL'
 
-export const MOVE_UNIFORM = 'MOVE_UNIFORM'
-export const MOVE_VERTICAL = 'MOVE_VERTICAL'
-export const MOVE_HORIZONTAL = 'MOVE_HORIZONTAL'
+export const MOVE_UNIFORM       = 'MOVE_UNIFORM'
+export const MOVE_VERTICAL      = 'MOVE_VERTICAL'
+export const MOVE_HORIZONTAL    = 'MOVE_HORIZONTAL'
+
+export const INCREASE_RESOLUTION  = 'INCREASE_RESOLUTION'
+export const DECREASE_RESOLUTION  = 'DECREASE_RESOLUTION'
+
+const LABEL_BLOCK               = 'block'
+const LABEL_WORKSPACE           = 'workspace'
+
+export const LABELS             = [ LABEL_BLOCK, LABEL_WORKSPACE ]
 
 type BlockProperties = {
   note: number,
@@ -37,17 +46,30 @@ export type BlockType = {
 }
 
 const blockDefaultProperties = {
-  note: 64,
-  velocity: 100,
-  start: 0,
-  end: 0,
+  start:    0,
+  end:      0,
   duration: 0,
+  note:     64,
+  velocity: 100,
 }
+
+export const increaseResolution = (increment: number = 1) => ({
+  type: INCREASE_RESOLUTION,
+  label: LABEL_WORKSPACE,
+  params: { increment }
+})
+
+export const decreaseResolution = (decrement: number = 1) => ({
+  type: DECREASE_RESOLUTION,
+  label: LABEL_WORKSPACE,
+  params: { decrement }
+})
 
 export function addBlock (properties: {}) {
   let id = parseInt(Math.random() * 100000)
   return {
-    type: ADD_BLOCK,
+    type:   ADD_BLOCK,
+    label:  LABEL_BLOCK,
     params: {
       id,
       properties: Object.assign({}, blockDefaultProperties: BlockProperties, properties),
@@ -57,41 +79,45 @@ export function addBlock (properties: {}) {
 
 export function updateBlock (id: number, properties: {}) {
   return {
-    type: UPDATE_BLOCK,
-    params: {
-      id,
-      properties,
-    }
+    type:   UPDATE_BLOCK,
+    label:  LABEL_BLOCK,
+    params: { id, properties }
   }
 }
 
 export const removeBlock = (id: number) => ({
-  type: REMOVE_BLOCK,
+  type:   REMOVE_BLOCK,
+  label:  LABEL_BLOCK,
   params: { id }
 })
 
 export const selectBlock = (id: number) => ({
-  type: SELECT_BLOCK,
+  type:   SELECT_BLOCK,
+  label:  LABEL_BLOCK,
   params: { id }
 })
 
-export const toggleSelection = (...blockIds: Array<number>) => ({
-  type: TOGGLE_SELECTION,
-  params: { blocks: blockIds }
+export const toggleSelection = (...blocks: Array<number>) => ({
+  type:   TOGGLE_SELECTION,
+  label:  LABEL_BLOCK,
+  params: { blocks }
 })
 
-export const selectBlocks = (...blockIds: Array<number>) => ({
-  type: SELECT_BLOCKS,
-  params: { blocks: blockIds }
+export const selectBlocks = (...blocks: Array<number>) => ({
+  type:   SELECT_BLOCKS,
+  label:  LABEL_BLOCK,
+  params: { blocks }
 })
 
-export const deselectBlocks = (...blockIds: Array<number>) => ({
-  type: DESELECT_BLOCKS,
-  params: { blocks: blockIds }
+export const deselectBlocks = (...blocks: Array<number>) => ({
+  type:   DESELECT_BLOCKS,
+  label:  LABEL_BLOCK,
+  params: { blocks }
 })
 
 export const clearSelection = () => ({
-  type: CLEAR_SELECTION,
+  type:   CLEAR_SELECTION,
+  label:  LABEL_BLOCK,
   params: {}
 })
 
@@ -101,7 +127,8 @@ export function setBlockNote (id: number | null, note?: number) {
     id = null
   }
   return {
-    type: SET_BLOCK_NOTE,
+    type:   SET_BLOCK_NOTE,
+    label:  LABEL_BLOCK,
     params: {
       id,
       properties: { note },
@@ -110,13 +137,14 @@ export function setBlockNote (id: number | null, note?: number) {
   }
 }
 
-export function setBlockStart (id: number | null, start?: number) {
+export function setBlockStart (id: number | null , start?: number) {
   if (!start) {
     start = id
     id = null
   }
   return {
-    type: SET_BLOCK_START,
+    type:   SET_BLOCK_START,
+    label:  LABEL_BLOCK,
     params: {
       id,
       properties: { start },
@@ -125,13 +153,14 @@ export function setBlockStart (id: number | null, start?: number) {
   }
 }
 
-export function setBlockDuration (id: number | null, duration?: number) {
+export function setBlockDuration (id: number | null , duration?: number) {
   if (!duration) {
     duration = id
     id = null
   }
   return {
-    type: SET_BLOCK_DURATION,
+    type:   SET_BLOCK_DURATION,
+    label:  LABEL_BLOCK,
     params: {
       id,
       properties: { duration },
@@ -141,12 +170,13 @@ export function setBlockDuration (id: number | null, duration?: number) {
 }
 
 export function setBlockVelocity (id: number, velocity: number) {
-  if (velocity > 127)
-    velocity = 127
-  if (velocity < 0)
-    velocity = 0
+  if (velocity > Note.MAX_VELOCITY)
+    velocity = Note.MAX_VELOCITY
+  if (velocity < Note.MIN_VELOCITY)
+    velocity = Note.MIN_VELOCITY
   return {
-    type: SET_BLOCK_VELOCITY,
+    type:   SET_BLOCK_VELOCITY,
+    label:  LABEL_BLOCK,
     params: {
       id,
       properties: { velocity },

@@ -3,7 +3,10 @@ export default {
     blocks:   [],
     selected: [],
     grid: {
+      sub: 4,
       size: 30,
+      vertical: 30,
+      horizontal: 30,
     },
   },
   tool: {

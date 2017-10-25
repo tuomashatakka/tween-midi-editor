@@ -15,7 +15,9 @@ function get (comp) {
   let mapState = state => {
     if (!state[key])
       throw new ReferenceError(`Store must have a key ${key} property.`, comp)
-    return state[key]
+    return Object.assign({},
+      state[key],
+      { getState: () => state })
   }
   let mapDispatch = dispatch => {
     let bound = bindActionCreators(actions, dispatch)

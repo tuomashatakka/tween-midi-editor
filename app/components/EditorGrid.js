@@ -1,5 +1,6 @@
 // @flow
 import React from 'react'
+import { connect } from 'react-redux'
 
 const getOffset = (offset) => {
   return {
@@ -8,7 +9,7 @@ const getOffset = (offset) => {
   }
 }
 
-type GridProperties = {
+export type GridProperties = {
   size: number,
   weight?: string,
   vertical?: number,
@@ -24,14 +25,20 @@ const Grid = (props: GridProperties) => {
   let vertical   = props.vertical || size
   let horizontal = props.horizontal || size
   let sub        = props.sub || 1
-  let parts      = Array(sub).fill(horizontal / sub)
+  let parts      = Array(sub).fill(horizontal)
 
   return <div className='background-grid' style={getOffset(props.offset)}>
     <svg className='grid-pattern' width="100%" height="100%">
 
       <defs>
-        <pattern id='ptgrid' x="0"  y="0" width={horizontal} height={vertical} patternUnits="userSpaceOnUse">
-          <rect className='line horizontal' x="0" y="0" width={horizontal} height={weight} />
+        <pattern id='ptgrid' x="0"  y="0" width={ horizontal * 4 } height={ vertical } patternUnits="userSpaceOnUse">
+          <rect
+            className='line horizontal'
+            x="0"
+            y="0"
+            width={ horizontal * 4 }
+            height={ weight } />
+
           {parts.map((w, n) => {
             let x = w * n
             let className = 'line vertical'
@@ -39,7 +46,14 @@ const Grid = (props: GridProperties) => {
               className += ' major'
             else
               className += ' minor'
-            return <rect key={n} className={className} x={x} y="0" width={weight} height={vertical} />
+            return <rect
+              y="0"
+              x={ x }
+              key={ n }
+              width={ weight }
+              height={ vertical }
+              className={ className }
+            />
           })}
         </pattern>
       </defs>
@@ -50,4 +64,11 @@ const Grid = (props: GridProperties) => {
   </div>
 }
 
-export default Grid
+const mapState = (state, props) => {
+  let grid = state.editor.grid
+  console.log("GRITH", grid)
+  return grid
+}
+const mapDispatch = (dispatch, props) => ({})
+
+export default connect(mapState, mapDispatch)(Grid)

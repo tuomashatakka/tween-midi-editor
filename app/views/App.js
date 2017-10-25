@@ -1,13 +1,18 @@
 // @flow
-import React, { Component } from 'react'
 import type { Children } from 'react'
+import type { GridProperties } from '../components/EditorGrid'
+
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import { setBlockNote, setBlockStart, setBlockDuration } from '../actions/editor'
 
-export default class App extends Component {
+
+class App extends Component {
 
   props: {
     children: Children,
     dispatch: Function,
+    grid: GridProperties,
   }
 
   componentWillMount () {
@@ -19,19 +24,20 @@ export default class App extends Component {
     document.removeEventListener('keydown', this.resolveKey)
   }
 
-  _resolveKey (event) {
-    console.log(event.key, event.shiftKey)
-    let g = this.props.grid.size
+  _resolveKey (event) { // eslint-disable-line complexity
+
+    let g = this.props.grid
+
     if (event.key === 'ArrowRight')
       if (event.shiftKey)
-        return this.props.dispatch(setBlockDuration(g))
+        return this.props.dispatch(setBlockDuration(g.size))
       else
-        return this.props.dispatch(setBlockStart(g))
+        return this.props.dispatch(setBlockStart(g.size))
     if (event.key === 'ArrowLeft')
       if (event.shiftKey)
-        return this.props.dispatch(setBlockDuration(-g))
+        return this.props.dispatch(setBlockDuration(-g.size))
       else
-        return this.props.dispatch(setBlockStart(-g))
+        return this.props.dispatch(setBlockStart(-g.size))
     if (event.key === 'ArrowUp')
       if (event.shiftKey)
         return this.props.dispatch(setBlockNote(12))
@@ -51,3 +57,14 @@ export default class App extends Component {
     </div>
   }
 }
+
+function mapState (state, props) {
+  let grid = state.editor.grid
+  return {
+    ...props,
+    grid,
+  }
+}
+
+
+export default connect(mapState)(App)

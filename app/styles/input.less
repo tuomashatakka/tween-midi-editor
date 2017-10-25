@@ -1,0 +1,32 @@
+
+.group {
+  display: block;
+  padding: @padding-regular;
+
+  > h3 {
+    .text(subtitle);
+    margin: 0;
+    padding: 0.5em 0 0;
+  }
+}
+
+.field {
+  align-items:  center;
+  display:      flex;
+  height:       1.6em;
+  padding:      @padding-regular / 2;
+  transition:   @transition-colors;
+  border-radius: 5px;
+  cursor: pointer;
+
+  h4 {
+    .text(label);
+    margin: 0;
+    padding: 0 0 0 @padding-regular;
+  }
+
+  &:hover {
+    color: @text-color-hover;
+    background: @button-background-hover
+  }
+}

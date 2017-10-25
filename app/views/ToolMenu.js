@@ -5,6 +5,7 @@ import connect from '../reducers/connector'
 
 export class ToolMenu extends Component {
   props: {
+    togglePreferences: Function,
     setTool: Function,
     tool: string | null,
   }
@@ -15,15 +16,29 @@ export class ToolMenu extends Component {
     'resize'
   ]
 
+  actions = [
+    'preferences',
+  ]
+
   render () {
-    return <ul>
-      {this.tools.map((tool) => <ToolButton
-        select={() => this.props.setTool(tool)}
-        isSelected={tool === this.props.tool}
-        name={tool}
-        key={tool}
-      />)}
-    </ul>
+    return <nav>
+      <ul>
+        {this.tools.map((tool) => <ToolButton
+          select={() => this.props.setTool(tool)}
+          isSelected={tool === this.props.tool}
+          name={tool}
+          key={tool}
+        />)}
+      </ul>
+      <ul>
+        {this.actions.map((tool) => <ToolButton
+          select={() => this.props.togglePreferences()}
+          isSelected={tool === this.props.tool}
+          name={tool}
+          key={tool}
+        />)}
+      </ul>
+    </nav>
   }
 }
 

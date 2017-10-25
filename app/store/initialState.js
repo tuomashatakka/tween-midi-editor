@@ -10,7 +10,10 @@ export default {
     },
   },
   tool: {
-    tool: null
+    tool: null,
+    preferences: {
+      isOpen: false,
+    }
   },
   counter: 1
 }

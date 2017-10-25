@@ -1,35 +1,12 @@
 
-@color-dark:         #2f2d3d;
-@color-primary:      #44394d;
-@color-primary-dark: #312838;
-
-@transition-duration: 0.3s;
-@transition-fast:     0.15s;
-@transition-colors:
-  @transition-duration color,
-  @transition-duration background-color,
-  @transition-duration border-color;
-@transition-colors-in:
-  @transition-duration / 4 color,
-  @transition-duration / 4 background-color,
-  @transition-duration / 4 border-color;
-
-@base-background:            @color-dark;
-@button-background-hover:    darken(@color-dark, 5%);
-@button-background-selected: @color-primary;
-@button-background-active:   mix(@button-background-selected, @button-background-hover);
-
-@note-background-color: @color-primary;
-@note-text-color: lighten(@color-primary, 50%);
-@note-background-color-active: lighten(@color-primary, 15%);
-@note-text-color-active: lighten(@color-primary, 65%);
-
-@grid-color: @color-primary;
+@import (reference) 'variables';
+@import 'overlay';
+@import 'input';
 
 body {
   margin: 0;
   position: relative;
-  color: white;
+  color: @text-color;
   height: 100vh;
   background-color: @base-background;
   font-family: Omnes, Montserrat, Questrial, Gotham, Arial, Helvetica, Helvetica Neue, serif;
@@ -99,9 +76,7 @@ a {
   line-height: inherit;
 
   .row-number {
-    font-family: Lato;
-    font-weight: 200;
-    font-size:   0.6em;
+    .text(label);
     flex:        0 0 @size;
     padding:     0 0 0 8px;
     text-align:  left;

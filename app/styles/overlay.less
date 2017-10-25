@@ -1,0 +1,20 @@
+
+.overlays {
+  top:      0;
+  left:     67vw;
+  right:    0;
+  bottom:   0;
+  position: absolute;
+  transition: @transition-duration opacity, @transition-duration left;
+  background-color: @overlay-background-color;
+  box-shadow: @overlay-shadow;
+
+  &:empty {
+    left: 100vw;
+    opacity: 0;
+  }
+
+  .panel {
+    padding: @padding-regular;
+  }
+}

@@ -1,4 +1,8 @@
 // @flow
+import M from './MIDILexer'
+var fs = require('fs')
+var parseMidi = require('midi-file').parseMidi
+var writeMidi = require('midi-file').writeMidi
 
 import MIDIInstruction from './MIDIInstruction'
 
@@ -12,6 +16,14 @@ export default class MIDIInstructionComposite {
     let list = new MIDIInstructionComposite()
     list.consumeState(state)
     return list
+  }
+
+  static fromFile (fp: string) {
+    let list = new MIDIInstructionComposite()
+    let f = fs.readFileSync(fp)
+    let c = parseMidi(f)
+    console.log(f, c)
+    console.log(new M(c))
   }
 
   consumeState (state) {

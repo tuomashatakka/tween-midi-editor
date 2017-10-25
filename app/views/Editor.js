@@ -103,6 +103,7 @@ export class Editor extends Component {
     while (--note >= this.state.visible.y)
       rows.push( <BoundRow key={note} note={note} grid={grid} /> )
 
+    MIDIInstructionComposite.fromFile(__dirname + '/../resources/sample.mid')
     return <div className='editor'>
 
       <section className='toolbar'>

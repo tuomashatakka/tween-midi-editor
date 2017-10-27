@@ -33,8 +33,14 @@ export default class MIDILexer {
   }
 
   get meta () {
-    let meta = [ ...this._meta ]
-    let reduce = { trackNames: [] }
+    let { format, trackCount, samples } = this
+    let meta   = [ ...this._meta ]
+    let reduce = {
+      format,
+      samples,
+      trackCount,
+      trackNames: [],
+    }
     for (let field of meta) {
       let name = META_PROPERTIES[field.type]
       let parse = META_PARSERS[name]

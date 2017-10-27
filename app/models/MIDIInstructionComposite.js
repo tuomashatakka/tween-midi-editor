@@ -5,14 +5,33 @@ import { parseMidi, writeMidi } from 'midi-file'
 
 import MIDIInstruction from './MIDIInstruction'
 
-export type MIDIInstructions = Array<MIDIProperties>
+export type Instructions = {
+  notes: Array<{
+    velocity: number,
+    note: number,
+    start: number,
+    end: number,
+  }>,
+  properties: {
+    title?: string,
+    tempo?: number,
+    format: number,
+    samples: number,
+    trackCount: number,
+    trackNames: Array<string>,
+    signature: Array<number>,
+    metronome: number,
+    thirtystm: number,
+  }
+}
 
 export default class MIDIInstructionComposite {
 
   instructions: Array<MIDIInstruction>
 
-  constructor () {
-    this.instructions = []
+  constructor (props: {} = {}, instructions: Array<MIDIInstruction>) {
+    this.instructions = instructions
+    this.properties   = props
   }
 
   static from (state): MIDIInstructionComposite {
@@ -23,17 +42,17 @@ export default class MIDIInstructionComposite {
 
   static fromFile (fp: string) {
     let track
-    let list = new MIDIInstructionComposite()
-    let file = fs.readFileSync(fp)
-
+    let instructions = []
+    let file    = fs.readFileSync(fp)
     let content = parseMidi(file)
     let lexer   = new MIDILexer(content)
 
     while (track = lexer.getNextTrack()) {
-      let instructions = track.map(properties => MIDIInstruction.from({ properties }))
-      list.instructions.push(...instructions)
+      let chunk  = track.map(properties => MIDIInstruction.from({ properties }))
+      instructions.push(...chunk)
     }
-    return list
+
+    return new MIDIInstructionComposite(lexer.meta, instructions)
   }
 
   consumeState (state) {
@@ -41,10 +60,14 @@ export default class MIDIInstructionComposite {
     this.instructions = state.editor.blocks.map(MIDIInstruction.from)
   }
 
-  serialize (): MIDIInstructions {
-    let data = []
+  serialize (): Instructions {
+    let notes = []
+    let properties = this.properties
     for (let instr of this.instructions)
-      data.push(instr.serialize())
-    return data
+      notes.push(instr.serialize())
+    return {
+      notes,
+      properties,
+    }
   }
 }

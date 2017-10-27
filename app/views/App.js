@@ -32,19 +32,20 @@ class App extends Component {
   _resolveKey (event) { // eslint-disable-line complexity
 
     let g = this.props.grid
+    let step = ( this.props.samples ) / (  g.sub )
 
     if (event.key === 'ArrowRight')
 
       if (event.shiftKey)
-        return this.props.setBlockDuration(g.size)
+        return this.props.setBlockDuration(step)
       else
-        return this.props.setBlockStart(g.size)
+        return this.props.setBlockStart(step)
 
     if (event.key === 'ArrowLeft')
       if (event.shiftKey)
-        return this.props.setBlockDuration(-g.size)
+        return this.props.setBlockDuration(-step)
       else
-        return this.props.setBlockStart(-g.size)
+        return this.props.setBlockStart(-step)
 
     if (event.key === 'ArrowUp')
       if (event.shiftKey)
@@ -73,9 +74,10 @@ class App extends Component {
 }
 
 function mapState (state, props) {
-  let children = props.children
-  let grid = state.editor.grid
-  let view = props.children
+  let children    = props.children
+  let samples     = state.editor.document.samples
+  let grid        = state.editor.grid
+  let view        = props.children
   let preferences = !! state.tool.preferences.isOpen ? <Preferences /> : null
 
   return {
@@ -83,6 +85,7 @@ function mapState (state, props) {
     view,
     children,
     preferences,
+    samples,
   }
 }
 

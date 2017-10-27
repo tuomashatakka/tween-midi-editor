@@ -16,7 +16,7 @@ function getBlocks (state, note) {
 export class Editor extends Component {
   props: {
     addBlock: Function,
-    addBlocks: Function,
+    readInstructions: Function,
     getState: () => EditorState,
     increaseResolution: Function,
     decreaseResolution: Function,
@@ -89,10 +89,9 @@ export class Editor extends Component {
     this.setState({ offset })
   }
 
-  openFile () {
-    let composite = MIDIInstructionComposite.fromFile(__dirname + '/../resources/sample.mid')
-    console.log(composite.instructions)
-    this.props.addBlocks(composite.instructions)
+  openFile (filepath) {
+    let instr = MIDIInstructionComposite.fromFile(filepath)
+    this.props.readInstructions(instr)
   }
 
   render () {
@@ -125,7 +124,7 @@ export class Editor extends Component {
         <div className='btn' onClick={ this.serializeNotes.bind(this, { note: 61 }) }>
           Serialize (dev)
         </div>
-        <div className='btn' onClick={ this.openFile.bind(this) }>
+        <div className='btn' onClick={ this.openFile.bind(this, __dirname + '/../resources/sample.mid') }>
           Open file
         </div>
       </section>
@@ -215,6 +214,12 @@ const Row = ({ grid, note, blocks, addBlock, clearSelection }: RowType) => {
     addBlock({ note , start })
   }
 
+  let deselect = (event) => {
+    if (event.isDefaultPrevented())
+      return false
+    return clearSelection()
+  }
+
   return <div
     style={height}
     className='row'>
@@ -228,7 +233,7 @@ const Row = ({ grid, note, blocks, addBlock, clearSelection }: RowType) => {
     <div
       ref={ ref => ref && (containerElement = ref) }
       className={'row-content'}
-      onClick={clearSelection}
+      onClick={deselect}
       onDoubleClick={insert}
       >
 
@@ -251,7 +256,7 @@ const mapRowProps = (state, props) => {
 
 const mapRowDispatch = (dispatch, props) => ({
   addBlock: (block) => dispatch(actions.addBlock({ ...block, note: props.note })),
-  addBlocks: (blocks) => dispatch(actions.addBlocks(...blocks)),
+  readInstructions: (ins) => dispatch(actions.readInstructions(ins)),
   clearSelection: () => dispatch(actions.clearSelection()),
 })
 

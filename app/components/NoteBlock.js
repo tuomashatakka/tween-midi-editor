@@ -5,12 +5,27 @@ import { connect } from 'react-redux'
 // import bindMove from '../utils/interactions'
 import { selectBlock, toggleSelection, setBlockStart, setBlockDuration } from '../actions/editor'
 
-const getBlockPosition = (block, d) => {
-  let { start, end } = block.properties
+export type Note = {
+
+}
+
+const getBlockPosition = (block, delta) => {
+  let { properties, samples, grid } = block
+  let { start, end } = properties
+  let { horizontal: w } = grid
+  let x  = start / samples * w
+  let x2 = (end - start) / samples * w
   return {
-    left: (start + d[0]) + 'px',
-    width: (end - start + d[2]) + 'px',
+    left: (x + delta[0]) + 'px',
+    width: (x2 + delta[2]) + 'px',
   }
+}
+
+const toSamples = (block, px) => {
+  let { samples, grid } = block
+  let { horizontal: w } = grid
+  let value = px * samples / w
+  return value
 }
 
 const mapBlockProperties = (state, props) => {
@@ -24,7 +39,9 @@ const mapBlockProperties = (state, props) => {
     },
     selected: state.editor.selected.indexOf(block.id) > -1,
     mode: state.tool.tool,
-    gridSize: state.editor.grid.size,
+    grid: state.editor.grid,
+    samples: state.editor.document.samples,
+    signature: state.editor.document.signature,
   }
 }
 
@@ -75,14 +92,16 @@ class NoteBlock extends React.Component {
   }
 
   onDrag (event) {
-    let g        = this.props.gridSize
+    let g        = this.props.grid
     let [ x, y ] = this.state.co
     let dx       = (event.clientX - x)
     let dy       = event.clientY - y
-    let edge_x   = (dx % g) > g / 2 ? 1 : 0
-    let edge_y   = (dy % g) > g / 2 ? 1 : 0
-    dx = dx - dx % g + edge_x * g
-    dy = dy - dy % g + edge_y * g
+    let snap_x   = g.horizontal / g.sub
+    let snap_y   = g.vertical / g.sub
+    let edge_x   = (dx % snap_x) > snap_x / 2 ? 1 : 0
+    let edge_y   = (dy % snap_y) > snap_y / 2 ? 1 : 0
+    dx = dx - dx % snap_x + edge_x * snap_x
+    dy = dy - dy % snap_y + edge_y * snap_y
 
     let delta = (this.props.mode === 'resize')
       ? [ 0, 0, dx, dy ]
@@ -91,11 +110,15 @@ class NoteBlock extends React.Component {
   }
 
   onDragEnd (event) {
-    if (this.props.mode === 'resize')
-      this.props.resize(this.state.delta[2] + this.props.properties.duration)
-    else
-      this.props.move(this.state.delta[0] + this.props.properties.start)
-
+    let block = this.props
+    if (this.props.mode === 'resize') {
+      let amount = toSamples(block, this.state.delta[2])
+      this.props.resize(amount + this.props.properties.duration)
+    }
+    else {
+      let amount = toSamples(block, this.state.delta[0])
+      this.props.move(amount + this.props.properties.start)
+    }
     this.setState({ move: false, co: [ event.clientX, event.clientY ], delta: [ 0, 0, 0, 0 ] })
     document.removeEventListener('mousemove', this.onDrag)
     document.removeEventListener('mouseup', this.onDragEnd)
@@ -108,8 +131,8 @@ class NoteBlock extends React.Component {
       className += ' selected'
     return <span
       className={className}
+      onClick={(e) => e.preventDefault()}
       onMouseDown={this.onDragStart}
-      onClick={(e) => e.stopPropagation()}
       style={getBlockPosition(block, this.state.delta)}
       key={block.id}>
       {block.properties.note}

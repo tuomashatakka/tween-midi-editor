@@ -4,7 +4,6 @@ import Note from '../models/Note'
 import MIDIInstruction from '../models/MIDIInstruction'
 
 export const ADD_BLOCK          = 'ADD_BLOCK'
-export const ADD_BLOCKS         = 'ADD_BLOCKS'
 export const REMOVE_BLOCK       = 'REMOVE_BLOCK'
 export const SELECT_BLOCK       = 'SELECT_BLOCK'
 export const SELECT_BLOCKS      = 'SELECT_BLOCKS'
@@ -29,6 +28,8 @@ export const MOVE_HORIZONTAL    = 'MOVE_HORIZONTAL'
 export const INCREASE_RESOLUTION  = 'INCREASE_RESOLUTION'
 export const DECREASE_RESOLUTION  = 'DECREASE_RESOLUTION'
 
+export const READ_INSTRUCTIONS  = 'READ_INSTRUCTIONS'
+
 const LABEL_BLOCK               = 'block'
 const LABEL_WORKSPACE           = 'workspace'
 
@@ -51,7 +52,7 @@ export type BlockType = {
   detail?: { relative: Boolean, }
 }
 
-const blockDefaultProperties = {
+const blockDefaultProperties: BlockProperties = {
   start:    0,
   end:      0,
   duration: 0,
@@ -77,24 +78,34 @@ export const decreaseResolution = (decrement: number = 1) => ({
   params: { decrement }
 })
 
-export function addBlocks (blocks: Array<MIDIInstruction>): Action {
+export function readInstructions (instructions: MIDIInstructionComposite): Action {
+
+  console.log(instructions)
+
+  const mapInstruction = properties =>
+    Object.assign({ id: generateID() }, blockDefaultProperties, properties)
+
+  let serializedData = instructions.serialize()
+  let blocks = serializedData.notes.map(mapInstruction)
+  console.info("blocks.", blocks)
   return {
-    type:   ADD_BLOCKS,
+    type:   READ_INSTRUCTIONS,
     label:  LABEL_BLOCK,
-    params: { blocks: blocks.map(properties =>
-      Object.assign({ id: generateID() }, blockDefaultProperties: BlockProperties, properties.serialize())) },
+    params: {
+      properties: serializedData.properties,
+      blocks
+    },
   }
 }
 
 export function addBlock (properties: {}) {
+  properties = Object.assign({}, blockDefaultProperties, properties)
   let id = generateID()
+
   return {
     type:   ADD_BLOCK,
     label:  LABEL_BLOCK,
-    params: {
-      id,
-      properties: Object.assign({}, blockDefaultProperties: BlockProperties, properties),
-    },
+    params: { id, properties, },
   }
 }
 

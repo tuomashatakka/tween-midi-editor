@@ -25,18 +25,18 @@ const Grid = (props: GridProperties) => {
   let vertical   = props.vertical || size
   let horizontal = props.horizontal || size
   let sub        = props.sub || 1
-  let parts      = Array(sub).fill(horizontal)
+  let parts      = Array(sub).fill(horizontal / sub)
 
   return <div className='background-grid' style={getOffset(props.offset)}>
     <svg className='grid-pattern' width="100%" height="100%">
 
       <defs>
-        <pattern id='ptgrid' x="0"  y="0" width={ horizontal * 4 } height={ vertical } patternUnits="userSpaceOnUse">
+        <pattern id='ptgrid' x="0"  y="0" width={ horizontal } height={ vertical } patternUnits="userSpaceOnUse">
           <rect
             className='line horizontal'
             x="0"
             y="0"
-            width={ horizontal * 4 }
+            width={ horizontal }
             height={ weight } />
 
           {parts.map((w, n) => {

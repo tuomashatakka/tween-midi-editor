@@ -4,7 +4,7 @@ import type { BlockType } from '../../actions/editor'
 import type { EditorState } from '.'
 import {
   ADD_BLOCK,
-  ADD_BLOCKS,
+  READ_INSTRUCTIONS,
   REMOVE_BLOCK,
   SELECT_BLOCK,
   SELECT_BLOCKS,
@@ -66,8 +66,15 @@ export default function block (state: EditorState = {}, action: Action): EditorS
   if(ADD_BLOCK === type)
     return Object.assign({}, state, { blocks: [ ...state.blocks, params ]})
 
-  if(ADD_BLOCKS === type)
-    return Object.assign({}, state, { blocks: [ ...state.blocks, ...params.blocks.map(properties => ({ properties, id: properties.id })) ]})
+  if(READ_INSTRUCTIONS === type)
+    return Object.assign({}, state, {
+      document: params.properties,
+      blocks: [
+        ...state.blocks,
+        ...params.blocks
+          .map(properties => ({ properties, id: properties.id }))
+      ]
+    })
 
   if(REMOVE_BLOCK === type) {
     let blocks = [ ...state.blocks ]
@@ -81,7 +88,7 @@ export default function block (state: EditorState = {}, action: Action): EditorS
     (SET_BLOCK_DURATION === type) ||
     (SET_BLOCK_START === type)) {
     if (params.id)
-      return update({ id: params.id })
+      return update({ id: params.id, ...params })
     return updateEachSelected(params)
   }
 

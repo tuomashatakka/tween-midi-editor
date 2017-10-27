@@ -1,8 +1,7 @@
 // @flow
-import M from './MIDILexer'
-var fs = require('fs')
-var parseMidi = require('midi-file').parseMidi
-var writeMidi = require('midi-file').writeMidi
+import MIDILexer from './MIDILexer'
+import fs from 'fs'
+import { parseMidi, writeMidi } from 'midi-file'
 
 import MIDIInstruction from './MIDIInstruction'
 
@@ -12,6 +11,10 @@ export default class MIDIInstructionComposite {
 
   instructions: Array<MIDIInstruction>
 
+  constructor () {
+    this.instructions = []
+  }
+
   static from (state): MIDIInstructionComposite {
     let list = new MIDIInstructionComposite()
     list.consumeState(state)
@@ -19,11 +22,18 @@ export default class MIDIInstructionComposite {
   }
 
   static fromFile (fp: string) {
+    let track
     let list = new MIDIInstructionComposite()
-    let f = fs.readFileSync(fp)
-    let c = parseMidi(f)
-    console.log(f, c)
-    console.log(new M(c))
+    let file = fs.readFileSync(fp)
+
+    let content = parseMidi(file)
+    let lexer   = new MIDILexer(content)
+
+    while (track = lexer.getNextTrack()) {
+      let instructions = track.map(properties => MIDIInstruction.from({ properties }))
+      list.instructions.push(...instructions)
+    }
+    return list
   }
 
   consumeState (state) {

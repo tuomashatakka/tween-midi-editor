@@ -4,6 +4,7 @@ import type { BlockType } from '../../actions/editor'
 import type { EditorState } from '.'
 import {
   ADD_BLOCK,
+  ADD_BLOCKS,
   REMOVE_BLOCK,
   SELECT_BLOCK,
   SELECT_BLOCKS,
@@ -64,6 +65,9 @@ export default function block (state: EditorState = {}, action: Action): EditorS
 
   if(ADD_BLOCK === type)
     return Object.assign({}, state, { blocks: [ ...state.blocks, params ]})
+
+  if(ADD_BLOCKS === type)
+    return Object.assign({}, state, { blocks: [ ...state.blocks, ...params.blocks.map(properties => ({ properties, id: properties.id })) ]})
 
   if(REMOVE_BLOCK === type) {
     let blocks = [ ...state.blocks ]

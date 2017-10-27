@@ -16,6 +16,7 @@ function getBlocks (state, note) {
 export class Editor extends Component {
   props: {
     addBlock: Function,
+    addBlocks: Function,
     getState: () => EditorState,
     increaseResolution: Function,
     decreaseResolution: Function,
@@ -88,6 +89,12 @@ export class Editor extends Component {
     this.setState({ offset })
   }
 
+  openFile () {
+    let composite = MIDIInstructionComposite.fromFile(__dirname + '/../resources/sample.mid')
+    console.log(composite.instructions)
+    this.props.addBlocks(composite.instructions)
+  }
+
   render () {
     let note = this.state.visible.y2
     let grid = this.props.grid
@@ -103,7 +110,6 @@ export class Editor extends Component {
     while (--note >= this.state.visible.y)
       rows.push( <BoundRow key={note} note={note} grid={grid} /> )
 
-    MIDIInstructionComposite.fromFile(__dirname + '/../resources/sample.mid')
     return <div className='editor'>
 
       <section className='toolbar'>
@@ -118,6 +124,9 @@ export class Editor extends Component {
         </div>
         <div className='btn' onClick={ this.serializeNotes.bind(this, { note: 61 }) }>
           Serialize (dev)
+        </div>
+        <div className='btn' onClick={ this.openFile.bind(this) }>
+          Open file
         </div>
       </section>
       <article className='note-area' style={transpose}>
@@ -242,6 +251,7 @@ const mapRowProps = (state, props) => {
 
 const mapRowDispatch = (dispatch, props) => ({
   addBlock: (block) => dispatch(actions.addBlock({ ...block, note: props.note })),
+  addBlocks: (blocks) => dispatch(actions.addBlocks(...blocks)),
   clearSelection: () => dispatch(actions.clearSelection()),
 })
 

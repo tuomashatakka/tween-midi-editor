@@ -1,7 +1,10 @@
 // @flow
+import type { Action } from '../reducers'
 import Note from '../models/Note'
+import MIDIInstruction from '../models/MIDIInstruction'
 
 export const ADD_BLOCK          = 'ADD_BLOCK'
+export const ADD_BLOCKS         = 'ADD_BLOCKS'
 export const REMOVE_BLOCK       = 'REMOVE_BLOCK'
 export const SELECT_BLOCK       = 'SELECT_BLOCK'
 export const SELECT_BLOCKS      = 'SELECT_BLOCKS'
@@ -31,12 +34,15 @@ const LABEL_WORKSPACE           = 'workspace'
 
 export const LABELS             = [ LABEL_BLOCK, LABEL_WORKSPACE ]
 
+const generateID = () => parseInt(Math.random() * 100000000)
+
 type BlockProperties = {
   note: number,
   velocity: number,
   start: number,
   end: number,
   duration: number,
+  ch?: number,
 }
 
 export type BlockType = {
@@ -49,7 +55,7 @@ const blockDefaultProperties = {
   start:    0,
   end:      0,
   duration: 0,
-  note:     64,
+  note:     0,
   velocity: 100,
 }
 
@@ -71,8 +77,17 @@ export const decreaseResolution = (decrement: number = 1) => ({
   params: { decrement }
 })
 
+export function addBlocks (blocks: Array<MIDIInstruction>): Action {
+  return {
+    type:   ADD_BLOCKS,
+    label:  LABEL_BLOCK,
+    params: { blocks: blocks.map(properties =>
+      Object.assign({ id: generateID() }, blockDefaultProperties: BlockProperties, properties.serialize())) },
+  }
+}
+
 export function addBlock (properties: {}) {
-  let id = parseInt(Math.random() * 100000)
+  let id = generateID()
   return {
     type:   ADD_BLOCK,
     label:  LABEL_BLOCK,

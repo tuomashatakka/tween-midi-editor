@@ -3,6 +3,8 @@
 @color-primary:      #44394d;
 @color-primary-dark: #312838;
 
+@import "config";
+
 @padding-regular:     1em;
 
 @transition-duration: 0.3s;
@@ -47,4 +49,13 @@
   font-family: Lato;
   font-weight: 100;
   font-size:   1.6em;
+}
+
+
+.color(background) {
+  background-color: var(--color-background, @base-background)
+}
+
+.color(primary) {
+  background-color: var(--color-primary, @color-primary)
 }

@@ -8,6 +8,8 @@ import Block from '../components/NoteBlock'
 import EditorGrid from '../components/EditorGrid'
 import MIDIInstructionComposite from '../models/MIDIInstructionComposite'
 
+const SCALE_AMOUNT = 50
+
 function getBlocks (state, note) {
   let blocks = state.editor.blocks
   return blocks.filter(block => block.properties.note === note)
@@ -20,9 +22,13 @@ export class Editor extends Component {
     getState: () => EditorState,
     increaseResolution: Function,
     decreaseResolution: Function,
+    scaleHorizontal: Function,
     blocks: Array<any>,
     grid: {
       size: number,
+      horizontal: number,
+      vertical: number,
+      sub: number,
     },
   }
   static actions   = require('../actions/editor')
@@ -54,7 +60,6 @@ export class Editor extends Component {
   }
 
   serializeNotes () {
-    console.log(this.props)
     let list = MIDIInstructionComposite.from(this.props.getState())
     console.log(list.serialize())
   }
@@ -67,19 +72,11 @@ export class Editor extends Component {
 
   pan (ev) {
     ev.preventDefault()
-    let delta = {
-      y: ev.deltaY,
-    }
     let { offset: [ x, y ], scale: [ sx, sy ] } = this.state
     if (ev.ctrlKey) {
       let polarity = 0 < ev.wheelDelta
-      let factor = polarity * 0.03
-      let scale = [
-        sx + factor,
-        sy + factor,
-      ]
-      console.log(scale, this.props)
-      return this.props.scaleHorizontal(this.props.grid.horizontal + polarity) // this.setState({ scale })
+      let amount = polarity ? SCALE_AMOUNT : -SCALE_AMOUNT
+      return this.props.scaleHorizontal(amount) // this.setState({ scale })
     }
     let offset = [
       x - ev.deltaX,
@@ -233,7 +230,7 @@ const Row = ({ grid, note, blocks, addBlock, clearSelection }: RowType) => {
     <div
       ref={ ref => ref && (containerElement = ref) }
       className={'row-content'}
-      onClick={deselect}
+      onMouseDown={deselect}
       onDoubleClick={insert}
       >
 

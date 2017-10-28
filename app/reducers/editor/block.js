@@ -49,9 +49,19 @@ export default function block (state: EditorState = {}, action: Action): EditorS
   let update = (block: BlockType | any | null = {}): EditorState => {
     let blocks = [ ...state.blocks ]
     let index  = blocks.findIndex(iter => block.id === iter.id)
-    let anew   = Object.assign({}, blocks.splice(index, 1)[0])
-    Object.assign(anew.properties, block.properties)
-    return Object.assign({}, state, { blocks: [ anew, ...blocks ] })
+    let bloc   = blocks.splice(index, 1)[0]
+    let start  = bloc.properties.start
+    Object.assign(bloc.properties, block.properties)
+    let diff   = bloc.properties.start - start
+
+    if (!bloc.properties.end)
+      bloc.properties.end = block.properties.start + bloc.properties.duration
+    if (diff) {
+      bloc.properties.end += diff
+      bloc.properties.duration += diff
+    }
+
+    return Object.assign({}, state, { blocks: [ bloc, ...blocks ] })
   }
 
   let relative = (block, p) => {

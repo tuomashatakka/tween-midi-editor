@@ -23,7 +23,7 @@ export default function workspace (state: EditorState, action: Action): EditorSt
 
   console.log(SCALE_HORIZONTAL, type)
   if (SCALE_HORIZONTAL === type) {
-    let horizontal = state.grid.horizontal + params.percent / 10
+    let horizontal = state.grid.horizontal + params.percent
     let s = Object.assign({}, state, { grid: { ...state.grid, horizontal } })
     console.warn(s)
     return s

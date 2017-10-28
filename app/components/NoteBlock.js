@@ -45,16 +45,13 @@ const mapBlockProperties = (state, props) => {
   }
 }
 
-const mapBlockDispatch = (dispatch, props) => {
+const mapBlockDispatch = (dispatch, props, ...args) => {
   return {
     select: (event) => {
       if (!event.shiftKey)
         dispatch(selectBlock(props.id))
       else
         dispatch(toggleSelection(props.id))
-
-      event.stopPropagation()
-      return false
     },
     move: (diff) => {
       if (diff)
@@ -81,7 +78,8 @@ class NoteBlock extends React.Component {
   }
 
   onDragStart (event) {
-    this.props.select(event)
+    if (!this.props.selected || event.shiftKey)
+      this.props.select(event)
     this.setState({
       move: true,
       co: [ event.clientX, event.clientY ],
@@ -89,6 +87,8 @@ class NoteBlock extends React.Component {
     })
     document.addEventListener('mousemove', this.onDrag)
     document.addEventListener('mouseup', this.onDragEnd)
+    event.stopPropagation()
+    return false
   }
 
   onDrag (event) {
@@ -107,6 +107,8 @@ class NoteBlock extends React.Component {
       ? [ 0, 0, dx, dy ]
       : [ dx, dy, 0, 0 ]
     this.setState({ delta })
+    event.stopPropagation()
+    return false
   }
 
   onDragEnd (event) {
@@ -122,6 +124,8 @@ class NoteBlock extends React.Component {
     this.setState({ move: false, co: [ event.clientX, event.clientY ], delta: [ 0, 0, 0, 0 ] })
     document.removeEventListener('mousemove', this.onDrag)
     document.removeEventListener('mouseup', this.onDragEnd)
+    event.stopPropagation()
+    return false
   }
 
   render () {
@@ -131,7 +135,6 @@ class NoteBlock extends React.Component {
       className += ' selected'
     return <span
       className={className}
-      onClick={(e) => e.preventDefault()}
       onMouseDown={this.onDragStart}
       style={getBlockPosition(block, this.state.delta)}
       key={block.id}>

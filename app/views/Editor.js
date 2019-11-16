@@ -1,12 +1,15 @@
 // @flow
 
 import React, { Component } from 'react'
-import {connect} from 'react-redux'
+import { connect } from 'react-redux'
+
 import decorate from '../reducers/connector'
-import * as actions from '../actions/editor'
 import Block from '../components/NoteBlock'
+import Canvas from '../components/Canvas'
 import EditorGrid from '../components/EditorGrid'
 import SnapGrid from '../utils/snapping'
+
+import * as actions from '../actions/editor'
 
 function getBlocks (state, note) {
   let blocks = state.editor.blocks
@@ -68,7 +71,7 @@ export class Editor extends Component {
       </div>
 
       <article className='note-area'>
-
+        {/* <Canvas /> */}
         <EditorGrid {...grid} offset={this.state.grid.offset} />
         <div className='grid' style={gridStyle}>{rows}</div>
       </article>

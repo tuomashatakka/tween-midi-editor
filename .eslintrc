@@ -13,9 +13,7 @@
     "node": true
   },
   "extends": [
-    "@tuomashatakka",
-    "plugin:react/recommended",
-    "plugin:flowtype/recommended"
+    "@tuomashatakka"
   ],
   "plugins": [
     "flowtype",

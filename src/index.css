@@ -1,0 +1,149 @@
+:root {
+  --bg: #1e1f24;
+  --panel: #16171b;
+  --border: #2c2e36;
+  --text: #d7dae2;
+  --text-dim: #9aa0ad;
+  --accent: #5b8def;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+.toolbar,
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 10px;
+  border-right: 1px solid var(--border);
+}
+
+.toolbar__group:last-child {
+  border-right: none;
+}
+
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.tool-btn:hover {
+  background: #23252b;
+  color: var(--text);
+}
+
+.tool-btn--active {
+  background: rgba(91, 141, 239, 0.18);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tool-btn--text {
+  width: auto;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.toolbar__select {
+  height: 30px;
+  background: #23252b;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.transport__bpm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.transport__bpm input {
+  width: 56px;
+  height: 30px;
+  background: #23252b;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.transport__pos {
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 48px;
+}
+
+.editor {
+  flex: 1;
+  min-height: 0;
+}
+
+.piano-roll {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.piano-roll__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}

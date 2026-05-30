@@ -1,16 +1,19 @@
-import { noteRect, rectFromPoints, type Viewport } from '@/view/coords'
+import { noteRect, rectFromPoints } from '@/view/coords'
+import type { Viewport } from '@/view/coords'
 import { theme } from '@/view/theme'
 import type { Draft } from '../interactions/types'
 
-export function drawOverlay(ctx: CanvasRenderingContext2D, vp: Viewport, draft: Draft) {
-  if (!draft) return
+
+export function drawOverlay (ctx: CanvasRenderingContext2D, vp: Viewport, draft: Draft) {
+  if (!draft)
+    return
 
   if (draft.kind === 'marquee') {
-    const r = rectFromPoints(draft.x1, draft.y1, draft.x2, draft.y2)
+    const r       = rectFromPoints(draft.x1, draft.y1, draft.x2, draft.y2)
     ctx.fillStyle = theme.marquee
     ctx.fillRect(r.x, r.y, r.w, r.h)
     ctx.strokeStyle = theme.marqueeBorder
-    ctx.lineWidth = 1
+    ctx.lineWidth   = 1
     ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w, r.h)
   }
 

@@ -11,11 +11,12 @@ import './index.css'
 store.dispatch(addNotes(seedNotes))
 
 const container = document.getElementById('root')
-if (!container) throw new Error('Root container #root not found')
+if (!container)
+  throw new Error('Root container #root not found')
 
 createRoot(container).render(
   <StrictMode>
-    <Provider store={store}>
+    <Provider store={ store }>
       <App />
     </Provider>
   </StrictMode>,

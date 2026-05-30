@@ -3,6 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import { MAX_NOTE, MIN_NOTE } from '@/domain/constants'
 import type { MidiNote, Note, NoteId, Ticks, Velocity } from '@/domain/types'
 
+
 const clampPitch = (p: number): MidiNote =>
   Math.max(MIN_NOTE, Math.min(MAX_NOTE, Math.round(p)))
 const clampVelocity = (v: number): Velocity =>
@@ -12,35 +13,39 @@ const clampStart = (t: number): Ticks => Math.max(0, Math.round(t))
 export const notesAdapter = createEntityAdapter<Note>()
 
 const notesSlice = createSlice({
-  name: 'notes',
+  name:         'notes',
   initialState: notesAdapter.getInitialState(),
-  reducers: {
+  reducers:     {
     addNote: {
       reducer: notesAdapter.addOne,
       prepare: (note: Omit<Note, 'id'> & { id?: NoteId }) => ({
         payload: {
-          id: note.id ?? nanoid(),
-          pitch: clampPitch(note.pitch),
-          start: clampStart(note.start),
+          id:       note.id ?? nanoid(),
+          pitch:    clampPitch(note.pitch),
+          start:    clampStart(note.start),
           duration: Math.max(1, Math.round(note.duration)),
           velocity: clampVelocity(note.velocity ?? 100),
         } satisfies Note,
       }),
     },
-    addNotes: notesAdapter.addMany,
-    removeNote: notesAdapter.removeOne,
+    addNotes:    notesAdapter.addMany,
+    removeNote:  notesAdapter.removeOne,
     removeNotes: notesAdapter.removeMany,
 
     updateNote: (
       state,
       action: PayloadAction<{ id: NoteId; changes: Partial<Omit<Note, 'id'>> }>,
     ) => {
-      const { id, changes } = action.payload
+      const { id, changes }     = action.payload
       const next: Partial<Note> = { ...changes }
-      if (next.pitch !== undefined) next.pitch = clampPitch(next.pitch)
-      if (next.velocity !== undefined) next.velocity = clampVelocity(next.velocity)
-      if (next.start !== undefined) next.start = clampStart(next.start)
-      if (next.duration !== undefined) next.duration = Math.max(1, Math.round(next.duration))
+      if (next.pitch !== undefined)
+        next.pitch = clampPitch(next.pitch)
+      if (next.velocity !== undefined)
+        next.velocity = clampVelocity(next.velocity)
+      if (next.start !== undefined)
+        next.start = clampStart(next.start)
+      if (next.duration !== undefined)
+        next.duration = Math.max(1, Math.round(next.duration))
       notesAdapter.updateOne(state, { id, changes: next })
     },
 
@@ -50,10 +55,14 @@ const notesSlice = createSlice({
     ) => {
       for (const { id, changes } of action.payload) {
         const next: Partial<Note> = { ...changes }
-        if (next.pitch !== undefined) next.pitch = clampPitch(next.pitch)
-        if (next.velocity !== undefined) next.velocity = clampVelocity(next.velocity)
-        if (next.start !== undefined) next.start = clampStart(next.start)
-        if (next.duration !== undefined) next.duration = Math.max(1, Math.round(next.duration))
+        if (next.pitch !== undefined)
+          next.pitch = clampPitch(next.pitch)
+        if (next.velocity !== undefined)
+          next.velocity = clampVelocity(next.velocity)
+        if (next.start !== undefined)
+          next.start = clampStart(next.start)
+        if (next.duration !== undefined)
+          next.duration = Math.max(1, Math.round(next.duration))
         notesAdapter.updateOne(state, { id, changes: next })
       }
     },
@@ -66,7 +75,8 @@ const notesSlice = createSlice({
       const { ids, deltaTicks = 0, deltaPitch = 0 } = action.payload
       for (const id of ids) {
         const note = state.entities[id]
-        if (!note) continue
+        if (!note)
+          continue
         note.start = clampStart(note.start + deltaTicks)
         note.pitch = clampPitch(note.pitch + deltaPitch)
       }
@@ -77,7 +87,8 @@ const notesSlice = createSlice({
       action: PayloadAction<{ id: NoteId; velocity: number }>,
     ) => {
       const note = state.entities[action.payload.id]
-      if (note) note.velocity = clampVelocity(action.payload.velocity)
+      if (note)
+        note.velocity = clampVelocity(action.payload.velocity)
     },
   },
 })

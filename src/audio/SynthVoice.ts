@@ -1,6 +1,7 @@
 import { pitchToFrequency } from '@/domain/time'
 
-const ATTACK = 0.005
+
+const ATTACK  = 0.005
 const RELEASE = 0.06
 
 /**
@@ -8,11 +9,11 @@ const RELEASE = 0.06
  * scheduled note and self-cleans when it finishes.
  */
 export class SynthVoice {
-  private osc: OscillatorNode
-  private gain: GainNode
+  private osc:      OscillatorNode
+  private gain:     GainNode
   private stopTime: number
 
-  constructor(
+  constructor (
     ctx: AudioContext,
     destination: AudioNode,
     pitch: number,
@@ -21,14 +22,14 @@ export class SynthVoice {
     durationSec: number,
     onEnded?: () => void,
   ) {
-    this.osc = ctx.createOscillator()
-    this.gain = ctx.createGain()
-    this.osc.type = 'sawtooth'
+    this.osc                 = ctx.createOscillator()
+    this.gain                = ctx.createGain()
+    this.osc.type            = 'sawtooth'
     this.osc.frequency.value = pitchToFrequency(pitch)
 
-    const peak = (velocity / 127) * 0.25
-    const start = when
-    const end = when + Math.max(durationSec, ATTACK + 0.01)
+    const peak    = velocity / 127 * 0.25
+    const start   = when
+    const end     = when + Math.max(durationSec, ATTACK + 0.01)
     this.stopTime = end + RELEASE
 
     this.gain.gain.setValueAtTime(0, start)
@@ -47,23 +48,25 @@ export class SynthVoice {
   }
 
   /** Immediately silence and stop this voice (panic / transport stop). */
-  kill(ctx: AudioContext) {
+  kill (ctx: AudioContext) {
     const now = ctx.currentTime
     try {
       this.gain.gain.cancelScheduledValues(now)
       this.gain.gain.setValueAtTime(this.gain.gain.value, now)
       this.gain.gain.linearRampToValueAtTime(0, now + 0.01)
       this.osc.stop(now + 0.02)
-    } catch {
+    }
+    catch {
       // already stopped
     }
   }
 
-  private disconnect() {
+  private disconnect () {
     try {
       this.osc.disconnect()
       this.gain.disconnect()
-    } catch {
+    }
+    catch {
       // ignore
     }
   }

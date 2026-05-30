@@ -11,6 +11,7 @@ import {
   ticksToSeconds,
 } from './time'
 
+
 describe('time math', () => {
   it('computes ticks per beat/bar for 4/4', () => {
     expect(ticksPerBeat({ numerator: 4, denominator: 4 })).toBe(PPQ)
@@ -20,7 +21,7 @@ describe('time math', () => {
   it('computes division ticks including triplets', () => {
     expect(divisionTicks(4)).toBe(PPQ) // quarter
     expect(divisionTicks(16)).toBe(PPQ / 4) // sixteenth
-    expect(divisionTicks(8, true)).toBe((PPQ / 2) * (2 / 3)) // eighth triplet
+    expect(divisionTicks(8, true)).toBe(PPQ / 2 * (2 / 3)) // eighth triplet
   })
 
   it('snaps to the nearest grid step', () => {

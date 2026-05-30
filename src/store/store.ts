@@ -9,16 +9,16 @@ import viewportReducer from './slices/viewportSlice'
 // Only the note data is historized for undo/redo. Transport position updates are
 // dispatched continuously by the audio engine, so they must never create history.
 const notesUndoable = undoable(notesReducer, {
-  limit: 100,
-  filter: excludeAction(['transport/setPosition']),
+  limit:  100,
+  filter: excludeAction([ 'transport/setPosition' ]),
 })
 
 const rootReducer = combineReducers({
-  notes: notesUndoable,
+  notes:     notesUndoable,
   selection: selectionReducer,
-  tool: toolReducer,
+  tool:      toolReducer,
   transport: transportReducer,
-  viewport: viewportReducer,
+  viewport:  viewportReducer,
 })
 
 export const store = configureStore({

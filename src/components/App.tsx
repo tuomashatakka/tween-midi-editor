@@ -4,19 +4,19 @@ import { PianoRoll } from './PianoRoll/PianoRoll'
 import { useKeyboardShortcuts } from '@/keymap/useKeyboardShortcuts'
 import { useAudioBridge } from '@/audio/useAudioBridge'
 
-export function App() {
+
+export const App = () => {
   useKeyboardShortcuts()
   useAudioBridge()
 
-  return (
-    <div className="app">
-      <header className="topbar">
-        <Toolbar />
-        <TransportControls />
-      </header>
-      <main className="editor">
-        <PianoRoll />
-      </main>
-    </div>
-  )
+  return <div className="app">
+    <header className="topbar">
+      <Toolbar />
+      <TransportControls />
+    </header>
+
+    <main className="editor">
+      <PianoRoll />
+    </main>
+  </div>
 }

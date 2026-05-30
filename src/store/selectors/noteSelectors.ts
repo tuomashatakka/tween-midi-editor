@@ -18,22 +18,24 @@ export const selectNoteTotal = adapterSelectors.selectTotal
 /** Notes overlapping a tick window [start, end) — used for viewport culling. */
 export const makeSelectNotesInTickRange = () =>
   createSelector(
-    [selectAllNotes, (_: RootState, start: Ticks) => start, (_: RootState, _s: Ticks, end: Ticks) => end],
+    [ selectAllNotes, (_: RootState, start: Ticks) => start, (_: RootState, _s: Ticks, end: Ticks) => end ],
     (notes: Note[], start, end) =>
-      notes.filter((n) => n.start < end && noteEnd(n) > start),
+      notes.filter(n => n.start < end && noteEnd(n) > start),
   )
 
 export const selectSelectedNotes = createSelector(
-  [selectNoteEntities, (state: RootState) => state.selection.selectedIds],
-  (entities, ids) => ids.map((id) => entities[id]).filter((n): n is Note => !!n),
+  [ selectNoteEntities, (state: RootState) => state.selection.selectedIds ],
+  (entities, ids) => ids.map(id => entities[id]).filter((n): n is Note => !!n),
 )
 
 export const selectSelectedTickSpan = createSelector(
-  [selectSelectedNotes],
-  (notes) => {
-    if (notes.length === 0) return 0
-    const min = Math.min(...notes.map((n) => n.start))
-    const max = Math.max(...notes.map((n) => noteEnd(n)))
+  [ selectSelectedNotes ],
+  notes => {
+    if (notes.length === 0)
+      return 0
+
+    const min = Math.min(...notes.map(n => n.start))
+    const max = Math.max(...notes.map(n => noteEnd(n)))
     return max - min
   },
 )

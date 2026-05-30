@@ -3,7 +3,7 @@ import { useAppStore } from '@/store/hooks'
 import { matchShortcut } from './keymap'
 
 /** Attaches a single window keydown listener that dispatches matched shortcuts. */
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts () {
   const store = useAppStore()
 
   useEffect(() => {
@@ -15,15 +15,16 @@ export function useKeyboardShortcuts() {
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable)
-      ) {
+      )
         return
-      }
+
       const shortcut = matchShortcut(e)
-      if (!shortcut) return
+      if (!shortcut)
+        return
       e.preventDefault()
       shortcut.run({ dispatch: store.dispatch, getState: store.getState })
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [store])
+  }, [ store ])
 }

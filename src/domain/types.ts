@@ -8,9 +8,9 @@ export type Velocity = number // 0..127
 export type NoteId = string
 
 export interface Note {
-  id: NoteId
-  pitch: MidiNote
-  start: Ticks
+  id:       NoteId
+  pitch:    MidiNote
+  start:    Ticks
   duration: Ticks
   velocity: Velocity
 }
@@ -21,12 +21,12 @@ export type ToolKind = 'select' | 'pan' | 'draw' | 'marquee'
 export type GridDivision = 1 | 2 | 4 | 8 | 16 | 32
 
 export interface TimeSignature {
-  numerator: number
+  numerator:   number
   denominator: number
 }
 
 export interface LoopRegion {
-  enabled: boolean
+  enabled:    boolean
   startTicks: Ticks
-  endTicks: Ticks
+  endTicks:   Ticks
 }

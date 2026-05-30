@@ -3,15 +3,16 @@
 
 import type { Note, Ticks } from '@/domain/types'
 
+
 export interface Viewport {
-  pxPerTick: number
-  rowHeight: number
-  scrollTicks: Ticks
-  scrollPitch: number
-  width: number
-  height: number
+  pxPerTick:     number
+  rowHeight:     number
+  scrollTicks:   Ticks
+  scrollPitch:   number
+  width:         number
+  height:        number
   keyboardWidth: number
-  rulerHeight: number
+  rulerHeight:   number
 }
 
 export interface Rect {

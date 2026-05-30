@@ -1,13 +1,15 @@
 import type { Note, NoteId } from '@/domain/types'
-import { noteRect, type Viewport } from '@/view/coords'
+import { noteRect } from '@/view/coords'
+import type { Viewport } from '@/view/coords'
 import { theme } from '@/view/theme'
 
+
 export interface NotesData {
-  notes: Note[]
+  notes:    Note[]
   selected: Set<NoteId>
 }
 
-export function drawNotes(ctx: CanvasRenderingContext2D, vp: Viewport, data: NotesData) {
+export function drawNotes (ctx: CanvasRenderingContext2D, vp: Viewport, data: NotesData) {
   // Clip to the grid area so notes never paint over keyboard/ruler.
   ctx.save()
   ctx.beginPath()
@@ -15,17 +17,17 @@ export function drawNotes(ctx: CanvasRenderingContext2D, vp: Viewport, data: Not
   ctx.clip()
 
   for (const note of data.notes) {
-    const r = noteRect(note, vp)
+    const r          = noteRect(note, vp)
     const isSelected = data.selected.has(note.id)
-    const alpha = 0.45 + (note.velocity / 127) * 0.55
+    const alpha      = 0.45 + note.velocity / 127 * 0.55
 
     ctx.globalAlpha = alpha
-    ctx.fillStyle = isSelected ? theme.noteSelected : theme.note
+    ctx.fillStyle   = isSelected ? theme.noteSelected : theme.note
     roundRect(ctx, r.x, r.y + 0.5, Math.max(1, r.w - 1), Math.max(1, r.h - 1), 2)
     ctx.fill()
 
     ctx.globalAlpha = 1
-    ctx.lineWidth = isSelected ? 2 : 1
+    ctx.lineWidth   = isSelected ? 2 : 1
     ctx.strokeStyle = isSelected ? theme.noteSelected : theme.noteBorder
     roundRect(ctx, r.x, r.y + 0.5, Math.max(1, r.w - 1), Math.max(1, r.h - 1), 2)
     ctx.stroke()
@@ -34,7 +36,7 @@ export function drawNotes(ctx: CanvasRenderingContext2D, vp: Viewport, data: Not
   ctx.restore()
 }
 
-function roundRect(
+function roundRect (
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,

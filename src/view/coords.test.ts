@@ -5,32 +5,32 @@ import {
   rectsIntersect,
   tickToX,
   xToTick,
-  yToPitch,
-  type Viewport,
+  yToPitch
+
 } from './coords'
+import type { Viewport } from './coords'
+
 
 const vp: Viewport = {
-  pxPerTick: 0.1,
-  rowHeight: 16,
-  scrollTicks: 100,
-  scrollPitch: 84,
-  width: 800,
-  height: 600,
+  pxPerTick:     0.1,
+  rowHeight:     16,
+  scrollTicks:   100,
+  scrollPitch:   84,
+  width:         800,
+  height:        600,
   keyboardWidth: 64,
-  rulerHeight: 28,
+  rulerHeight:   28,
 }
 
 describe('coordinate transforms', () => {
   it('round-trips tick <-> x', () => {
-    for (const t of [0, 100, 480, 1920]) {
+    for (const t of [ 0, 100, 480, 1920 ])
       expect(xToTick(tickToX(t, vp), vp)).toBeCloseTo(t)
-    }
   })
 
   it('round-trips pitch <-> y', () => {
-    for (const p of [0, 36, 60, 84, 127]) {
+    for (const p of [ 0, 36, 60, 84, 127 ])
       expect(yToPitch(pitchToY(p, vp), vp)).toBeCloseTo(p)
-    }
   })
 
   it('places the keyboard origin at keyboardWidth for scrollTicks', () => {

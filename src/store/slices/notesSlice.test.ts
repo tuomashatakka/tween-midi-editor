@@ -7,7 +7,8 @@ import reducer, {
   notesAdapter,
 } from './notesSlice'
 
-const empty = notesAdapter.getInitialState()
+
+const empty     = notesAdapter.getInitialState()
 const selectors = notesAdapter.getSelectors()
 
 describe('notesSlice', () => {
@@ -23,12 +24,13 @@ describe('notesSlice', () => {
 
   it('moveNotesBy clamps pitch 0..127 and start >= 0', () => {
     let state = reducer(empty, addNote({ id: 'x', pitch: 1, start: 10, duration: 100, velocity: 50 }))
-    state = reducer(state, moveNotesBy({ ids: ['x'], deltaTicks: -1000, deltaPitch: -5 }))
+    state = reducer(state, moveNotesBy({ ids: [ 'x' ], deltaTicks: -1000, deltaPitch: -5 }))
+
     const n = selectors.selectById(state, 'x')!
     expect(n.start).toBe(0)
     expect(n.pitch).toBe(0)
 
-    state = reducer(state, moveNotesBy({ ids: ['x'], deltaTicks: 50, deltaPitch: 200 }))
+    state = reducer(state, moveNotesBy({ ids: [ 'x' ], deltaTicks: 50, deltaPitch: 200 }))
     expect(selectors.selectById(state, 'x')!.pitch).toBe(127)
     expect(selectors.selectById(state, 'x')!.start).toBe(50)
   })
@@ -43,7 +45,7 @@ describe('notesSlice', () => {
 
   it('updateNote enforces a minimum duration of 1', () => {
     let state = reducer(empty, addNote({ id: 'd', pitch: 60, start: 0, duration: 100, velocity: 50 }))
-    state = reducer(state, updateNote({ id: 'd', changes: { duration: -50 } }))
+    state = reducer(state, updateNote({ id: 'd', changes: { duration: -50 }}))
     expect(selectors.selectById(state, 'd')!.duration).toBe(1)
   })
 })

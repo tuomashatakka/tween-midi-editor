@@ -2,12 +2,14 @@
 
 import { RESIZE_EDGE_PX } from '@/domain/constants'
 import type { Note, NoteId } from '@/domain/types'
-import { noteRect, pointInRect, rectsIntersect, type Rect, type Viewport } from './coords'
+import { noteRect, pointInRect, rectsIntersect } from './coords'
+import type { Rect, Viewport } from './coords'
+
 
 export type HitEdge = 'body' | 'resize-right'
 
 export interface NoteHit {
-  id: NoteId
+  id:   NoteId
   edge: HitEdge
 }
 
@@ -23,8 +25,10 @@ export const hitTestNote = (
 ): NoteHit | null => {
   for (let i = notes.length - 1; i >= 0; i--) {
     const note = notes[i]
-    const r = noteRect(note, vp)
-    if (!pointInRect(px, py, r)) continue
+    const r    = noteRect(note, vp)
+    if (!pointInRect(px, py, r))
+      continue
+
     const edge: HitEdge =
       px >= r.x + r.w - RESIZE_EDGE_PX && r.w > RESIZE_EDGE_PX * 2
         ? 'resize-right'
@@ -40,4 +44,4 @@ export const notesInRect = (
   notes: Note[],
   vp: Viewport,
 ): NoteId[] =>
-  notes.filter((n) => rectsIntersect(noteRect(n, vp), rect)).map((n) => n.id)
+  notes.filter(n => rectsIntersect(noteRect(n, vp), rect)).map(n => n.id)

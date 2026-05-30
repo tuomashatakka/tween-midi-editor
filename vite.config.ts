@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
-import { defineConfig, type PluginOption } from 'vite'
+import { defineConfig } from 'vite'
+import type { PluginOption } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
 
@@ -8,7 +9,7 @@ import { fileURLToPath, URL } from 'node:url'
 const withElectron = process.env.ELECTRON === '1'
 
 export default defineConfig(async () => {
-  const plugins: PluginOption[] = [react()]
+  const plugins: PluginOption[] = [ react() ]
 
   if (withElectron) {
     const { default: electron } = await import('vite-plugin-electron')
@@ -17,14 +18,14 @@ export default defineConfig(async () => {
       electron([
         {
           entry: 'electron/main.ts',
-          vite: { build: { outDir: 'dist-electron' } },
+          vite:  { build: { outDir: 'dist-electron' }},
         },
         {
           entry: 'electron/preload.ts',
-          onstart(args) {
+          onstart (args) {
             args.reload()
           },
-          vite: { build: { outDir: 'dist-electron' } },
+          vite: { build: { outDir: 'dist-electron' }},
         },
       ]),
       renderer(),
@@ -32,7 +33,7 @@ export default defineConfig(async () => {
   }
 
   return {
-    base: './',
+    base:    './',
     plugins,
     resolve: {
       alias: {
@@ -40,10 +41,10 @@ export default defineConfig(async () => {
       },
     },
     test: {
-      globals: true,
-      environment: 'node',
-      environmentMatchGlobs: [['**/*.dom.test.{ts,tsx}', 'jsdom']],
-      include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      globals:               true,
+      environment:           'node',
+      environmentMatchGlobs: [[ '**/*.dom.test.{ts,tsx}', 'jsdom' ]],
+      include:               [ 'src/**/*.{test,spec}.{ts,tsx}' ],
     },
   }
 })

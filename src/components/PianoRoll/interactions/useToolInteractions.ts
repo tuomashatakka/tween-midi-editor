@@ -21,6 +21,7 @@ import { snapTicks, floorToGrid } from '@/domain/time'
 import type { NoteId } from '@/domain/types'
 import { rectFromPoints, xToTick, yToPitch, yToPitchLane } from '@/view/coords'
 import { hitTestNote, notesInRect } from '@/view/hitTest'
+import { playPreview } from '@/audio/engine'
 import type { Draft } from './types'
 
 
@@ -52,20 +53,26 @@ export function useToolInteractions (
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      const state    = store.getState()
-      const tool     = state.tool.active
-      const vp       = selectViewport(state)
-      const notes    = selectAllNotes(state)
+      const state      = store.getState()
+      const tool       = state.tool.active
+      const vp         = selectViewport(state)
+      const notes      = selectAllNotes(state)
       const [ px, py ] = localPoint(e)
-      if (px < vp.keyboardWidth || py < vp.rulerHeight) 
-return
+      // Clicking the left piano keyboard auditions that pitch.
+      if (px < vp.keyboardWidth && py >= vp.rulerHeight) {
+        playPreview(yToPitchLane(py, vp), 100)
+        return
+      }
+      if (px < vp.keyboardWidth || py < vp.rulerHeight)
+        return
+
       e.currentTarget.setPointerCapture(e.pointerId)
       gesture.current = { startX: px, startY: py, lastX: px, lastY: py, anchorStart: 0, resizeBase: 0 }
 
       const hit = hitTestNote(px, py, notes, vp)
 
-      if (tool === 'pan') 
-return
+      if (tool === 'pan')
+        return
 
       if (tool === 'marquee') {
         draftRef.current = { kind: 'marquee', x1: px, y1: py, x2: px, y2: py, additive: e.shiftKey }
@@ -84,6 +91,8 @@ return
         const id    = nanoid()
         store.dispatch(addNote({ id, pitch, start, duration: state.tool.defaultNoteDuration, velocity: 100 }))
         store.dispatch(selectOne(id))
+        if (state.tool.playOnDraw)
+          playPreview(pitch, 100)
         gesture.current.resizeBase = start + state.tool.defaultNoteDuration
         draftRef.current           = { kind: 'resize', noteIds: [ id ], deltaDuration: 0 }
         requestRedraw()
@@ -92,8 +101,8 @@ return
 
       // select tool
       if (!hit) {
-        if (!e.shiftKey) 
-store.dispatch(clearSelection())
+        if (!e.shiftKey)
+          store.dispatch(clearSelection())
         return
       }
 
@@ -104,17 +113,20 @@ store.dispatch(clearSelection())
         store.dispatch(toggleSelection([ hit.id ]))
         return
       }
-      if (!isSelected) 
-store.dispatch(selectOne(hit.id))
+      if (!isSelected)
+        store.dispatch(selectOne(hit.id))
 
       const targetIds: NoteId[] = isSelected ? selected : [ hit.id ]
       const anchor              = notes.find(n => n.id === hit.id)!
+
+      // Audition the clicked note.
+      playPreview(anchor.pitch, anchor.velocity)
 
       if (hit.edge === 'resize-right') {
         gesture.current.resizeBase = anchor.start + anchor.duration
         draftRef.current           = { kind: 'resize', noteIds: targetIds, deltaDuration: 0 }
       }
- else {
+      else {
         gesture.current.anchorStart = anchor.start
         draftRef.current            = { kind: 'move', noteIds: targetIds, deltaTicks: 0, deltaPitch: 0 }
       }
@@ -127,11 +139,11 @@ store.dispatch(selectOne(hit.id))
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       const g     = gesture.current
       const draft = draftRef.current
-      if (!g) 
-return
+      if (!g)
+        return
 
-      const state    = store.getState()
-      const vp       = selectViewport(state)
+      const state      = store.getState()
+      const vp         = selectViewport(state)
       const [ px, py ] = localPoint(e)
 
       if (state.tool.active === 'pan') {
@@ -140,20 +152,27 @@ return
         g.lastY = py
         return
       }
-      if (!draft) 
-return
+      if (!draft)
+        return
 
-      if (draft.kind === 'marquee') {
-        draftRef.current = { ...draft, x2: px, y2: py }
-      } else if (draft.kind === 'move') {
-        const rawDelta   = xToTick(px, vp) - xToTick(g.startX, vp)
-        const deltaTicks = snap(g.anchorStart + rawDelta) - g.anchorStart
-        const deltaPitch = Math.round(yToPitch(py, vp) - yToPitch(g.startY, vp))
-        draftRef.current = { ...draft, deltaTicks, deltaPitch }
-      } else if (draft.kind === 'resize') {
-        const rawDelta      = xToTick(px, vp) - xToTick(g.startX, vp)
-        const deltaDuration = snap(g.resizeBase + rawDelta) - g.resizeBase
-        draftRef.current    = { ...draft, deltaDuration }
+      switch (draft.kind) {
+        case 'marquee': {
+          draftRef.current = { ...draft, x2: px, y2: py }
+          break
+        }
+        case 'move': {
+          const rawDelta   = xToTick(px, vp) - xToTick(g.startX, vp)
+          const deltaTicks = snap(g.anchorStart + rawDelta) - g.anchorStart
+          const deltaPitch = Math.round(yToPitch(py, vp) - yToPitch(g.startY, vp))
+          draftRef.current = { ...draft, deltaTicks, deltaPitch }
+          break
+        }
+        case 'resize': {
+          const rawDelta      = xToTick(px, vp) - xToTick(g.startX, vp)
+          const deltaDuration = snap(g.resizeBase + rawDelta) - g.resizeBase
+          draftRef.current    = { ...draft, deltaDuration }
+          break
+        }
       }
       g.lastX = px
       g.lastY = py
@@ -170,10 +189,12 @@ return
       try {
         e.currentTarget.releasePointerCapture(e.pointerId)
       }
- catch {
+      catch {
         // ignore
       }
-      if (!draft) return
+      if (!draft)
+        return
+
       const state = store.getState()
       const vp    = selectViewport(state)
       const notes = selectAllNotes(state)
@@ -183,10 +204,11 @@ return
         const ids  = notesInRect(rect, notes, vp)
         store.dispatch(draft.additive ? addToSelection(ids) : setSelection(ids))
       }
- else if (draft.kind === 'move') {
-        if (draft.deltaTicks !== 0 || draft.deltaPitch !== 0) store.dispatch(moveNotesBy({ ids: draft.noteIds, deltaTicks: draft.deltaTicks, deltaPitch: draft.deltaPitch }))
+      else if (draft.kind === 'move') {
+        if (draft.deltaTicks !== 0 || draft.deltaPitch !== 0)
+          store.dispatch(moveNotesBy({ ids: draft.noteIds, deltaTicks: draft.deltaTicks, deltaPitch: draft.deltaPitch }))
       }
- else if (draft.kind === 'resize') {
+      else if (draft.kind === 'resize') {
         if (draft.deltaDuration !== 0) {
           const byId    = new Map(notes.map(n => [ n.id, n ]))
           const updates = draft.noteIds
@@ -215,11 +237,12 @@ return
         const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1
         store.dispatch(zoomX({ factor, anchorTicks: xToTick(px, vp) }))
       }
- else if (e.altKey) {
+      else if (e.altKey) {
         const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1
         store.dispatch(zoomY({ factor, anchorPitch: yToPitch(py, vp) }))
       }
- else store.dispatch(panBy({ dxPx: -e.deltaX, dyPx: -e.deltaY }))
+      else
+        store.dispatch(panBy({ dxPx: -e.deltaX, dyPx: -e.deltaY }))
     },
     [ store ],
   )

@@ -2,6 +2,7 @@ import type { AppStore } from '@/store/store'
 import { setPosition } from '@/store/slices/transportSlice'
 import { selectAllNotes } from '@/store/selectors/noteSelectors'
 import { AudioEngine } from './AudioEngine'
+import { setActiveEngine } from './engine'
 
 /**
  * Side-effect layer connecting transport state in the store to the AudioEngine.
@@ -20,6 +21,8 @@ export function createAudioBridge (store: AppStore) {
       store.dispatch(setPosition(ticks))
     },
   })
+
+  setActiveEngine(engine)
 
   let prevPlaying = false
   let prevBpm     = store.getState().transport.bpm
@@ -43,6 +46,7 @@ export function createAudioBridge (store: AppStore) {
 
   return () => {
     unsubscribe()
+    setActiveEngine(null)
     engine.dispose()
   }
 }

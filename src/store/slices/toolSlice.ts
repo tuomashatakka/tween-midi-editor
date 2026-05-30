@@ -10,6 +10,8 @@ interface ToolState {
   division:            GridDivision
   triplet:             boolean
   defaultNoteDuration: Ticks
+  showWaveform:        boolean
+  playOnDraw:          boolean
 }
 
 const initialState: ToolState = {
@@ -18,6 +20,8 @@ const initialState: ToolState = {
   division:            DEFAULT_DIVISION,
   triplet:             false,
   defaultNoteDuration: DEFAULT_NOTE_DURATION,
+  showWaveform:        true,
+  playOnDraw:          true,
 }
 
 const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
@@ -55,6 +59,16 @@ const toolSlice = createSlice({
     setDefaultNoteDuration: (state, action: PayloadAction<Ticks>) => {
       state.defaultNoteDuration = Math.max(1, action.payload)
     },
+
+    /** Toggle the Melodyne-style oscillator waveform overlay on notes. */
+    toggleWaveform: state => {
+      state.showWaveform = !state.showWaveform
+    },
+
+    /** Toggle audible preview of notes as they are drawn. */
+    togglePlayOnDraw: state => {
+      state.playOnDraw = !state.playOnDraw
+    },
   },
 })
 
@@ -66,6 +80,8 @@ export const {
   coarserGrid,
   toggleTriplet,
   setDefaultNoteDuration,
+  toggleWaveform,
+  togglePlayOnDraw,
 } = toolSlice.actions
 
 export default toolSlice.reducer

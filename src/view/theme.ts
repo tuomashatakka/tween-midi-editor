@@ -20,4 +20,6 @@ export const theme = {
   marquee:       'rgba(91,141,239,0.18)',
   marqueeBorder: '#5b8def',
   draftNote:     'rgba(255,209,102,0.5)',
+  waveformFill:  'rgba(255,255,255,0.10)',
+  waveformLine:  'rgba(255,255,255,0.55)',
 } as const

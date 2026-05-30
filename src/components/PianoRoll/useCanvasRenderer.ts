@@ -9,6 +9,7 @@ import {
 import type { GridDivision, Note, TimeSignature } from '@/domain/types'
 import { drawGrid } from './layers/gridLayer'
 import { drawNotes } from './layers/notesLayer'
+import { drawWaveform } from './layers/waveformLayer'
 import { drawRuler } from './layers/rulerLayer'
 import { drawKeyboard } from './layers/keyboardLayer'
 import { drawPlayhead } from './layers/playheadLayer'
@@ -31,6 +32,8 @@ export function useCanvasRenderer (
   const division      = useAppSelector(s => s.tool.division)
   const triplet       = useAppSelector(s => s.tool.triplet)
   const timeSignature = useAppSelector(s => s.transport.timeSignature)
+  const bpm           = useAppSelector(s => s.transport.bpm)
+  const showWaveform  = useAppSelector(s => s.tool.showWaveform)
   const visibleTicks  = useAppSelector(selectVisibleTickRange)
   const visiblePitch  = useAppSelector(selectVisiblePitchRange)
 
@@ -50,6 +53,8 @@ export function useCanvasRenderer (
     division,
     triplet,
     timeSignature,
+    bpm,
+    showWaveform,
     visibleTicks,
     visiblePitch,
   })
@@ -61,6 +66,8 @@ export function useCanvasRenderer (
     division,
     triplet,
     timeSignature,
+    bpm,
+    showWaveform,
     visibleTicks,
     visiblePitch,
   }
@@ -91,6 +98,8 @@ type Inputs = {
   division:      GridDivision
   triplet:       boolean
   timeSignature: TimeSignature
+  bpm:           number
+  showWaveform:  boolean
   visibleTicks:  { start: number; end: number }
   visiblePitch:  { lo: number; hi: number }
 }
@@ -144,6 +153,8 @@ function draw (
     visiblePitch:  inp.visiblePitch,
   })
   drawNotes(ctx, vp, { notes: renderNotes, selected: inp.selected })
+  if (inp.showWaveform)
+    drawWaveform(ctx, vp, { notes: renderNotes, bpm: inp.bpm })
   drawOverlay(ctx, vp, draft)
   drawRuler(ctx, vp, { timeSignature: inp.timeSignature, visibleTicks: inp.visibleTicks })
   drawKeyboard(ctx, vp, { visiblePitch: inp.visiblePitch })

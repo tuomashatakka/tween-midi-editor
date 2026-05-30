@@ -4,9 +4,18 @@ import {
   Pencil,
   BoxSelect,
   Magnet,
+  AudioWaveform,
+  Volume2,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { setDivision, setTool, toggleSnap, toggleTriplet } from '@/store/slices/toolSlice'
+import {
+  setDivision,
+  setTool,
+  toggleSnap,
+  toggleTriplet,
+  toggleWaveform,
+  togglePlayOnDraw,
+} from '@/store/slices/toolSlice'
 import type { GridDivision, ToolKind } from '@/domain/types'
 
 
@@ -20,11 +29,13 @@ const TOOLS: { kind: ToolKind; label: string; Icon: typeof Hand; hint: string }[
 const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
 
 export const Toolbar = () => {
-  const dispatch = useAppDispatch()
-  const active   = useAppSelector(s => s.tool.active)
-  const snap     = useAppSelector(s => s.tool.snapEnabled)
-  const division = useAppSelector(s => s.tool.division)
-  const triplet  = useAppSelector(s => s.tool.triplet)
+  const dispatch     = useAppDispatch()
+  const active       = useAppSelector(s => s.tool.active)
+  const snap         = useAppSelector(s => s.tool.snapEnabled)
+  const division     = useAppSelector(s => s.tool.division)
+  const triplet      = useAppSelector(s => s.tool.triplet)
+  const showWaveform = useAppSelector(s => s.tool.showWaveform)
+  const playOnDraw   = useAppSelector(s => s.tool.playOnDraw)
 
   return <div className="toolbar">
     <div className="toolbar__group">
@@ -71,6 +82,28 @@ export const Toolbar = () => {
         className={ `tool-btn tool-btn--text${triplet ? ' tool-btn--active' : ''}` }
         onClick={ () => dispatch(toggleTriplet()) }>
         3T
+      </button>
+    </div>
+
+    <div className="toolbar__group">
+      <button
+        type="button"
+        title="Waveform overlay on notes"
+        aria-label="Toggle waveform overlay"
+        aria-pressed={ showWaveform }
+        className={ `tool-btn${showWaveform ? ' tool-btn--active' : ''}` }
+        onClick={ () => dispatch(toggleWaveform()) }>
+        <AudioWaveform size={ 16 } />
+      </button>
+
+      <button
+        type="button"
+        title="Play notes while drawing"
+        aria-label="Toggle play on draw"
+        aria-pressed={ playOnDraw }
+        className={ `tool-btn${playOnDraw ? ' tool-btn--active' : ''}` }
+        onClick={ () => dispatch(togglePlayOnDraw()) }>
+        <Volume2 size={ 16 } />
       </button>
     </div>
   </div>

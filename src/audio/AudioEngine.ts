@@ -73,6 +73,29 @@ export class AudioEngine {
       this.providers.onPosition(tick)
   }
 
+  /**
+   * Audition a single note immediately, independent of the transport. Used for
+   * click-to-preview on the piano roll and play-on-draw. Safe to call from a
+   * pointer event, which satisfies the browser's AudioContext gesture gate.
+   */
+  previewNote (pitch: number, velocity = 100, durationSec = 0.35) {
+    const ctx = this.ensureContext()
+    if (!this.master)
+      return
+
+    const when  = ctx.currentTime
+    const voice = new SynthVoice(
+      ctx,
+      this.master,
+      pitch,
+      velocity,
+      when,
+      durationSec,
+      () => this.voices.delete(voice),
+    )
+    this.voices.add(voice)
+  }
+
   /** Re-anchor timing when bpm changes mid-playback so the playhead is continuous. */
   reanchorForBpm () {
     if (!this.playing || !this.ctx)

@@ -6,6 +6,7 @@ import {
   Magnet,
   AudioWaveform,
   Volume2,
+  Settings,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
@@ -28,7 +29,11 @@ const TOOLS: { kind: ToolKind; label: string; Icon: typeof Hand; hint: string }[
 
 const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
 
-export const Toolbar = () => {
+interface ToolbarProps {
+  onOpenPreferences: () => void
+}
+
+export const Toolbar = ({ onOpenPreferences }: ToolbarProps) => {
   const dispatch     = useAppDispatch()
   const active       = useAppSelector(s => s.tool.active)
   const snap         = useAppSelector(s => s.tool.snapEnabled)
@@ -86,6 +91,15 @@ export const Toolbar = () => {
     </div>
 
     <div className="toolbar__group">
+      <button
+        type="button"
+        title="Open preferences"
+        aria-label="Open preferences"
+        className="tool-btn"
+        onClick={ onOpenPreferences }>
+        <Settings size={ 16 } />
+      </button>
+
       <button
         type="button"
         title="Waveform overlay on notes"

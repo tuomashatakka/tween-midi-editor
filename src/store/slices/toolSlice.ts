@@ -4,7 +4,7 @@ import { DEFAULT_DIVISION, DEFAULT_NOTE_DURATION } from '@/domain/constants'
 import type { GridDivision, Ticks, ToolKind } from '@/domain/types'
 
 
-interface ToolState {
+export interface ToolState {
   active:              ToolKind
   snapEnabled:         boolean
   division:            GridDivision
@@ -14,7 +14,7 @@ interface ToolState {
   playOnDraw:          boolean
 }
 
-const initialState: ToolState = {
+export const initialToolState: ToolState = {
   active:              'select',
   snapEnabled:         true,
   division:            DEFAULT_DIVISION,
@@ -27,14 +27,17 @@ const initialState: ToolState = {
 const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
 
 const toolSlice = createSlice({
-  name:     'tool',
-  initialState,
-  reducers: {
+  name:         'tool',
+  initialState: initialToolState,
+  reducers:     {
     setTool: (state, action: PayloadAction<ToolKind>) => {
       state.active = action.payload
     },
     toggleSnap: state => {
       state.snapEnabled = !state.snapEnabled
+    },
+    setSnapEnabled: (state, action: PayloadAction<boolean>) => {
+      state.snapEnabled = action.payload
     },
     setDivision: (state, action: PayloadAction<GridDivision>) => {
       state.division = action.payload
@@ -56,6 +59,9 @@ const toolSlice = createSlice({
     toggleTriplet: state => {
       state.triplet = !state.triplet
     },
+    setTriplet: (state, action: PayloadAction<boolean>) => {
+      state.triplet = action.payload
+    },
     setDefaultNoteDuration: (state, action: PayloadAction<Ticks>) => {
       state.defaultNoteDuration = Math.max(1, action.payload)
     },
@@ -64,10 +70,16 @@ const toolSlice = createSlice({
     toggleWaveform: state => {
       state.showWaveform = !state.showWaveform
     },
+    setShowWaveform: (state, action: PayloadAction<boolean>) => {
+      state.showWaveform = action.payload
+    },
 
     /** Toggle audible preview of notes as they are drawn. */
     togglePlayOnDraw: state => {
       state.playOnDraw = !state.playOnDraw
+    },
+    setPlayOnDraw: (state, action: PayloadAction<boolean>) => {
+      state.playOnDraw = action.payload
     },
   },
 })
@@ -75,13 +87,17 @@ const toolSlice = createSlice({
 export const {
   setTool,
   toggleSnap,
+  setSnapEnabled,
   setDivision,
   finerGrid,
   coarserGrid,
   toggleTriplet,
+  setTriplet,
   setDefaultNoteDuration,
   toggleWaveform,
+  setShowWaveform,
   togglePlayOnDraw,
+  setPlayOnDraw,
 } = toolSlice.actions
 
 export default toolSlice.reducer

@@ -2,11 +2,12 @@ import {
   MousePointer2,
   Hand,
   Pencil,
-  BoxSelect,
   Magnet,
   AudioWaveform,
   Volume2,
   Settings,
+  FolderOpen,
+  Save,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
@@ -17,14 +18,15 @@ import {
   toggleWaveform,
   togglePlayOnDraw,
 } from '@/store/slices/toolSlice'
+import { exportMidi, importMidiFile } from '@/thunks/projectThunks'
+import { openMidiPicker } from '@/midi/filePicker'
 import type { GridDivision, ToolKind } from '@/domain/types'
 
 
 const TOOLS: { kind: ToolKind; label: string; Icon: typeof Hand; hint: string }[] = [
-  { kind: 'select', label: 'Select', Icon: MousePointer2, hint: 'Select / move / resize' },
-  { kind: 'pan', label: 'Pan', Icon: Hand, hint: 'Pan the view' },
+  { kind: 'select', label: 'Select', Icon: MousePointer2, hint: 'Select / move / resize / rubber-band' },
   { kind: 'draw', label: 'Draw', Icon: Pencil, hint: 'Draw notes (B)' },
-  { kind: 'marquee', label: 'Marquee', Icon: BoxSelect, hint: 'Rubber-band select' },
+  { kind: 'pan', label: 'Pan', Icon: Hand, hint: 'Pan the view' },
 ]
 
 const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
@@ -41,8 +43,41 @@ export const Toolbar = ({ onOpenPreferences }: ToolbarProps) => {
   const triplet      = useAppSelector(s => s.tool.triplet)
   const showWaveform = useAppSelector(s => s.tool.showWaveform)
   const playOnDraw   = useAppSelector(s => s.tool.playOnDraw)
+  const fileName     = useAppSelector(s => s.project.fileName)
+  const dirty        = useAppSelector(s => s.project.dirty)
+
+  const openFile = async () => {
+    const file = await openMidiPicker()
+    if (file)
+      dispatch(importMidiFile(file))
+  }
 
   return <div className="toolbar">
+    <div className="toolbar__group">
+      <button
+        className="tool-btn"
+        aria-label="Open MIDI file"
+        type="button"
+        title="Open MIDI file (Ctrl/Cmd+O)"
+        onClick={ () => void openFile() }>
+        <FolderOpen size={ 16 } />
+      </button>
+
+      <button
+        className="tool-btn"
+        aria-label="Save MIDI file"
+        type="button"
+        title="Save MIDI file (Ctrl/Cmd+S)"
+        onClick={ () => dispatch(exportMidi()) }>
+        <Save size={ 16 } />
+      </button>
+
+      <span className="toolbar__filename" title={ fileName ?? 'Unsaved project' }>
+        {fileName ?? 'untitled'}
+        {dirty ? ' •' : ''}
+      </span>
+    </div>
+
     <div className="toolbar__group">
       {TOOLS.map(({ kind, label, Icon, hint }) =>
         <button

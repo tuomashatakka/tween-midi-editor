@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useAppStore } from '@/store/hooks'
 import { selectAllNotes } from '@/store/selectors/noteSelectors'
@@ -11,18 +11,20 @@ import {
 } from '@/store/slices/notesSlice'
 import {
   addToSelection,
-  clearSelection,
   selectOne,
   setSelection,
   toggleSelection,
 } from '@/store/slices/selectionSlice'
-import { panBy, zoomX, zoomY } from '@/store/slices/viewportSlice'
+import { panBy } from '@/store/slices/viewportSlice'
+import type { AppStore } from '@/store/store'
 import { snapTicks, floorToGrid } from '@/domain/time'
 import type { NoteId } from '@/domain/types'
 import { rectFromPoints, xToTick, yToPitch, yToPitchLane } from '@/view/coords'
+import type { Viewport } from '@/view/coords'
 import { hitTestNote, notesInRect } from '@/view/hitTest'
 import { playPreview } from '@/audio/engine'
 import type { Draft } from './types'
+import { localPoint } from './utils'
 
 
 interface Gesture {
@@ -34,17 +36,39 @@ interface Gesture {
   resizeBase:  number // start+duration of grabbed note (resize)
 }
 
+/** Draw tool on empty space: create a note and enter a resize-drag draft. */
+function beginDrawGesture (
+  store: AppStore,
+  px: number,
+  py: number,
+  vp: Viewport,
+  gesture: Gesture,
+  draftRef: React.MutableRefObject<Draft>,
+) {
+  const { division, triplet, defaultNoteDuration, playOnDraw } = store.getState().tool
+
+  const pitch = yToPitchLane(py, vp)
+  const start = floorToGrid(xToTick(px, vp), division, triplet)
+  const id    = nanoid()
+  store.dispatch(addNote({ id, pitch, start, duration: defaultNoteDuration, velocity: 100 }))
+  store.dispatch(selectOne(id))
+  if (playOnDraw)
+    playPreview(pitch, 100)
+  gesture.resizeBase = start + defaultNoteDuration
+  draftRef.current   = { kind: 'resize', noteIds: [ id ], deltaDuration: 0 }
+}
+
+/**
+ * Grid-area tool gestures (select / draw / pan). Assumes the router has
+ * already established that the pointer is over the note grid; pointer
+ * capture and region routing live in usePianoRollInteractions.
+ */
 export function useToolInteractions (
   draftRef: React.MutableRefObject<Draft>,
   requestRedraw: () => void,
 ) {
   const store   = useAppStore()
   const gesture = useRef<Gesture | null>(null)
-
-  const localPoint = (e: React.PointerEvent): [number, number] => {
-    const rect = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect()
-    return [ e.clientX - rect.left, e.clientY - rect.top ]
-  }
 
   const snap = (t: number): number => {
     const { snapEnabled, division, triplet } = store.getState().tool
@@ -58,15 +82,7 @@ export function useToolInteractions (
       const vp         = selectViewport(state)
       const notes      = selectAllNotes(state)
       const [ px, py ] = localPoint(e)
-      // Clicking the left piano keyboard auditions that pitch.
-      if (px < vp.keyboardWidth && py >= vp.rulerHeight) {
-        playPreview(yToPitchLane(py, vp), 100)
-        return
-      }
-      if (px < vp.keyboardWidth || py < vp.rulerHeight)
-        return
 
-      e.currentTarget.setPointerCapture(e.pointerId)
       gesture.current = { startX: px, startY: py, lastX: px, lastY: py, anchorStart: 0, resizeBase: 0 }
 
       const hit = hitTestNote(px, py, notes, vp)
@@ -74,35 +90,23 @@ export function useToolInteractions (
       if (tool === 'pan')
         return
 
-      if (tool === 'marquee') {
-        draftRef.current = { kind: 'marquee', x1: px, y1: py, x2: px, y2: py, additive: e.shiftKey }
-        requestRedraw()
-        return
-      }
-
       if (tool === 'draw') {
         if (hit) {
           store.dispatch(removeNote(hit.id))
           return
         }
 
-        const pitch = yToPitchLane(py, vp)
-        const start = floorToGrid(xToTick(px, vp), state.tool.division, state.tool.triplet)
-        const id    = nanoid()
-        store.dispatch(addNote({ id, pitch, start, duration: state.tool.defaultNoteDuration, velocity: 100 }))
-        store.dispatch(selectOne(id))
-        if (state.tool.playOnDraw)
-          playPreview(pitch, 100)
-        gesture.current.resizeBase = start + state.tool.defaultNoteDuration
-        draftRef.current           = { kind: 'resize', noteIds: [ id ], deltaDuration: 0 }
+        beginDrawGesture(store, px, py, vp, gesture.current, draftRef)
         requestRedraw()
         return
       }
 
-      // select tool
+      // Select tool: dragging empty space rubber-band selects (Ableton-style).
+      // A zero-area marquee commits setSelection([]) on pointer-up, which is
+      // equivalent to clearing the selection, so a plain click still deselects.
       if (!hit) {
-        if (!e.shiftKey)
-          store.dispatch(clearSelection())
+        draftRef.current = { kind: 'marquee', x1: px, y1: py, x2: px, y2: py, additive: e.shiftKey }
+        requestRedraw()
         return
       }
 
@@ -182,16 +186,10 @@ export function useToolInteractions (
   )
 
   const onPointerUp = useCallback(
-    (e: React.PointerEvent<HTMLCanvasElement>) => {
+    () => {
       const draft     = draftRef.current
       const g         = gesture.current
       gesture.current = null
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId)
-      }
-      catch {
-        // ignore
-      }
       if (!draft)
         return
 
@@ -225,27 +223,18 @@ export function useToolInteractions (
     [ store, draftRef, requestRedraw ],
   )
 
-  const onWheel = useCallback(
-    (e: React.WheelEvent<HTMLCanvasElement>) => {
-      const state = store.getState()
-      const vp    = selectViewport(state)
-      const rect  = (e.currentTarget as HTMLCanvasElement).getBoundingClientRect()
-      const px    = e.clientX - rect.left
-      const py    = e.clientY - rect.top
-
-      if (e.ctrlKey || e.metaKey) {
-        const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1
-        store.dispatch(zoomX({ factor, anchorTicks: xToTick(px, vp) }))
-      }
-      else if (e.altKey) {
-        const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1
-        store.dispatch(zoomY({ factor, anchorPitch: yToPitch(py, vp) }))
-      }
-      else
-        store.dispatch(panBy({ dxPx: -e.deltaX, dyPx: -e.deltaY }))
+  /** Abandon the in-flight gesture without committing (e.g. a pinch began). */
+  const cancel = useCallback(
+    () => {
+      gesture.current  = null
+      draftRef.current = null
+      requestRedraw()
     },
-    [ store ],
+    [ draftRef, requestRedraw ],
   )
 
-  return { onPointerDown, onPointerMove, onPointerUp, onWheel }
+  return useMemo(
+    () => ({ onPointerDown, onPointerMove, onPointerUp, cancel }),
+    [ onPointerDown, onPointerMove, onPointerUp, cancel ],
+  )
 }

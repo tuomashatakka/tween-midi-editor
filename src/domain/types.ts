@@ -15,7 +15,7 @@ export interface Note {
   velocity: Velocity
 }
 
-export type ToolKind = 'select' | 'pan' | 'draw' | 'marquee'
+export type ToolKind = 'select' | 'pan' | 'draw'
 
 // Grid divisions expressed as 1/n notes. Triplet variants are derived separately.
 export type GridDivision = 1 | 2 | 4 | 8 | 16 | 32

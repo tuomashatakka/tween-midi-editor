@@ -6,7 +6,7 @@ import {
   selectVisiblePitchRange,
   selectVisibleTickRange,
 } from '@/store/selectors/viewportSelectors'
-import type { GridDivision, Note, TimeSignature } from '@/domain/types'
+import type { GridDivision, LoopRegion, Note, TimeSignature } from '@/domain/types'
 import { drawGrid } from './layers/gridLayer'
 import { drawNotes } from './layers/notesLayer'
 import { drawWaveform } from './layers/waveformLayer'
@@ -29,6 +29,8 @@ export function useCanvasRenderer (
   const notes         = useAppSelector(selectAllNotes)
   const selectedIds   = useAppSelector(s => s.selection.selectedIds)
   const positionTicks = useAppSelector(s => s.transport.positionTicks)
+  const loop          = useAppSelector(s => s.transport.loop)
+  const clipEndTicks  = useAppSelector(s => s.transport.clipEndTicks)
   const division      = useAppSelector(s => s.tool.division)
   const triplet       = useAppSelector(s => s.tool.triplet)
   const timeSignature = useAppSelector(s => s.transport.timeSignature)
@@ -50,6 +52,8 @@ export function useCanvasRenderer (
     notes,
     selected,
     positionTicks,
+    loop,
+    clipEndTicks,
     division,
     triplet,
     timeSignature,
@@ -63,6 +67,8 @@ export function useCanvasRenderer (
     notes,
     selected,
     positionTicks,
+    loop,
+    clipEndTicks,
     division,
     triplet,
     timeSignature,
@@ -95,6 +101,8 @@ type Inputs = {
   notes:         Note[]
   selected:      Set<string>
   positionTicks: number
+  loop:          LoopRegion
+  clipEndTicks:  number
   division:      GridDivision
   triplet:       boolean
   timeSignature: TimeSignature
@@ -151,12 +159,18 @@ function draw (
     triplet:       inp.triplet,
     visibleTicks:  inp.visibleTicks,
     visiblePitch:  inp.visiblePitch,
+    clipEndTicks:  inp.clipEndTicks,
   })
   drawNotes(ctx, vp, { notes: renderNotes, selected: inp.selected })
   if (inp.showWaveform)
     drawWaveform(ctx, vp, { notes: renderNotes, bpm: inp.bpm })
   drawOverlay(ctx, vp, draft)
-  drawRuler(ctx, vp, { timeSignature: inp.timeSignature, visibleTicks: inp.visibleTicks })
+  drawRuler(ctx, vp, {
+    timeSignature: inp.timeSignature,
+    visibleTicks:  inp.visibleTicks,
+    loop:          inp.loop,
+    clipEndTicks:  inp.clipEndTicks,
+  })
   drawKeyboard(ctx, vp, { visiblePitch: inp.visiblePitch })
   drawPlayhead(ctx, vp, { positionTicks: inp.positionTicks })
 }

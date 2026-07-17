@@ -1,5 +1,5 @@
 import type { AppStore } from '@/store/store'
-import { setPosition } from '@/store/slices/transportSlice'
+import { seek, setPosition, stop } from '@/store/slices/transportSlice'
 import { selectAllNotes } from '@/store/selectors/noteSelectors'
 import { AudioEngine } from './AudioEngine'
 import { setActiveEngine } from './engine'
@@ -16,9 +16,14 @@ export function createAudioBridge (store: AppStore) {
     getNotes:   () => selectAllNotes(store.getState()),
     getBpm:     () => store.getState().transport.bpm,
     getLoop:    () => store.getState().transport.loop,
+    getClipEnd: () => store.getState().transport.clipEndTicks,
     onPosition: ticks => {
       lastEnginePos = ticks
       store.dispatch(setPosition(ticks))
+    },
+    onClipEnd: () => {
+      store.dispatch(stop())
+      store.dispatch(seek(0))
     },
   })
 

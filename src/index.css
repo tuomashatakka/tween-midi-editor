@@ -105,6 +105,16 @@ body {
   font-size: 12px;
 }
 
+.toolbar__filename {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-dim, #9aa0ad);
+  padding: 0 4px;
+}
+
 .transport__bpm {
   display: inline-flex;
   align-items: center;

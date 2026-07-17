@@ -1,5 +1,5 @@
 import { divisionTicks, isBlackKey, ticksPerBar, ticksPerBeat } from '@/domain/time'
-import type { GridDivision, TimeSignature } from '@/domain/types'
+import type { GridDivision, Ticks, TimeSignature } from '@/domain/types'
 import { pitchToY, tickToX } from '@/view/coords'
 import type { Viewport } from '@/view/coords'
 import { theme } from '@/view/theme'
@@ -11,10 +11,11 @@ export interface GridData {
   triplet:       boolean
   visibleTicks:  { start: number; end: number }
   visiblePitch:  { lo: number; hi: number }
+  clipEndTicks:  Ticks
 }
 
 export function drawGrid (ctx: CanvasRenderingContext2D, vp: Viewport, data: GridData) {
-  const { timeSignature, division, triplet, visibleTicks, visiblePitch } = data
+  const { timeSignature, division, triplet, visibleTicks, visiblePitch, clipEndTicks } = data
 
   // Background.
   ctx.fillStyle = theme.bg
@@ -46,5 +47,13 @@ export function drawGrid (ctx: CanvasRenderingContext2D, vp: Viewport, data: Gri
     ctx.moveTo(x, vp.rulerHeight)
     ctx.lineTo(x, vp.height)
     ctx.stroke()
+  }
+
+  // De-emphasize the region beyond the clip end (Ableton-style).
+  const clipEndX = tickToX(clipEndTicks, vp)
+  if (clipEndX < vp.width) {
+    const x       = Math.max(clipEndX, vp.keyboardWidth)
+    ctx.fillStyle = theme.beyondClipEnd
+    ctx.fillRect(x, vp.rulerHeight, vp.width - x, vp.height - vp.rulerHeight)
   }
 }

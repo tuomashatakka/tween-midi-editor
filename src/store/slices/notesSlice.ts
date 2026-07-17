@@ -32,6 +32,9 @@ const notesSlice = createSlice({
     removeNote:  notesAdapter.removeOne,
     removeNotes: notesAdapter.removeMany,
 
+    /** Replace the whole document's notes (file import). */
+    setAllNotes: notesAdapter.setAll,
+
     updateNote: (
       state,
       action: PayloadAction<{ id: NoteId; changes: Partial<Omit<Note, 'id'>> }>,
@@ -98,6 +101,7 @@ export const {
   addNotes,
   removeNote,
   removeNotes,
+  setAllNotes,
   updateNote,
   updateNotes,
   moveNotesBy,

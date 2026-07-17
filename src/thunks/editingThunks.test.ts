@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import undoable from 'redux-undo'
 import notesReducer, { addNotes } from '@/store/slices/notesSlice'
+import projectReducer from '@/store/slices/projectSlice'
 import selectionReducer, { setSelection } from '@/store/slices/selectionSlice'
 import toolReducer from '@/store/slices/toolSlice'
 import transportReducer from '@/store/slices/transportSlice'
@@ -15,6 +16,7 @@ function makeStore () {
   return configureStore({
     reducer: combineReducers({
       notes:     undoable(notesReducer),
+      project:   projectReducer,
       selection: selectionReducer,
       tool:      toolReducer,
       transport: transportReducer,

@@ -14,6 +14,8 @@ import {
   undo,
   redo,
 } from '@/thunks/editingThunks'
+import { exportMidi, importMidiFile } from '@/thunks/projectThunks'
+import { openMidiPicker } from '@/midi/filePicker'
 
 
 export interface ShortcutContext {
@@ -52,6 +54,18 @@ export const SHORTCUTS: Shortcut[] = [
         dispatch(togglePlay())
     } },
   { key: 'l', mod: true, description: 'Toggle Loop', run: ({ dispatch }) => dispatch(toggleLoop()) },
+
+  // File
+  { key:         'o',
+    mod:         true,
+    description: 'Open MIDI file',
+    run:         ({ dispatch }) => {
+      void openMidiPicker().then(file => {
+        if (file)
+          dispatch(importMidiFile(file))
+      })
+    } },
+  { key: 's', mod: true, description: 'Save MIDI file', run: ({ dispatch }) => dispatch(exportMidi()) },
 
   // Editing
   { key: 'delete', description: 'Delete selected', run: ({ dispatch }) => dispatch(deleteSelected()) },

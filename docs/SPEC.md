@@ -31,14 +31,17 @@ source of truth for scope; keep it updated as features land.
 - **selectionSlice** — `{ selectedIds }` with select/toggle/add/set/clear.
 - **toolSlice** — active tool, grid snap, division, triplet, default note duration,
   `showWaveform`, `playOnDraw`.
-- **transportSlice** — `isPlaying`, `bpm`, `positionTicks`, `loop`, `timeSignature`,
-  `metronome`.
+- **transportSlice** — `isPlaying`, `bpm`, `positionTicks`, `loop`, `clipEndTicks`
+  (the Ableton-style clip end marker; playback stops there when looping is off),
+  `timeSignature`, `metronome`.
 - **viewportSlice** — `pxPerTick`, `rowHeight`, `scrollTicks`, `scrollPitch`, size;
   zoom-to-cursor on both axes, pan.
+- **projectSlice** — `fileName`, `dirty` (set by `projectMiddleware` on
+  content-changing actions, cleared on save/load).
 
 Cross-slice operations (delete, select-all, copy/cut/paste, duplicate, nudge,
 transpose, undo/redo) are **thunks** in `src/thunks/editingThunks.ts` — never
-inside reducers.
+inside reducers. MIDI import/export live in `src/thunks/projectThunks.ts`.
 
 ### 2.3 View layer (`src/view`)
 - `coords.ts` — pure musical↔pixel transforms (`tickToX`, `xToTick`, `pitchToY`,
@@ -54,15 +57,25 @@ inside reducers.
   **single action on pointer-up**, so the store never churns per frame.
 
 ### 2.5 Tools, input & shortcuts
-- Tools: **select** (move/resize/multi-select), **pan**, **draw** (pencil add/remove),
-  **marquee**.
-- Icon toolbar + transport controls (play/stop, BPM, loop) + grid/snap/triplet +
-  waveform & play-on-draw toggles.
+- Tools: **select** (move/resize/multi-select; dragging empty space rubber-band
+  selects, Ableton-style), **draw** (pencil add/remove), **pan**.
+- Icon toolbar (incl. Open/Save MIDI + file name/dirty indicator) + transport
+  controls (play/stop, BPM, loop) + grid/snap/triplet + waveform & play-on-draw
+  toggles.
 - Ableton-grounded keymap (`src/keymap`): Draw `B`, Play/Stop `Space`, Delete,
   Select-all `Ctrl/Cmd+A`, Copy/Cut/Paste, Duplicate `Ctrl/Cmd+D`, Undo/Redo,
   nudge `Ctrl/Cmd+←/→`, transpose `↑/↓` (octave with `Shift`), grid `Ctrl/Cmd+1/2/3/4`,
-  loop `Ctrl/Cmd+L`, zoom `+/-`. Mouse wheel scrolls; `Ctrl/Cmd+wheel` zooms X;
-  `Alt+wheel` zooms Y.
+  loop `Ctrl/Cmd+L`, zoom `+/-`, Open `Ctrl/Cmd+O`, Save `Ctrl/Cmd+S`.
+- Wheel (native non-passive listener): plain wheel **zooms X** at the cursor;
+  `Ctrl/Cmd+wheel` zooms X (covers trackpad pinch); `Alt+wheel` zooms Y;
+  `Shift+wheel` pans; dominant horizontal deltas pan the timeline
+  (`interactions/wheelIntent.ts`).
+- **Touch**: one finger drives the active tool; two fingers pinch-zoom per axis
+  and pan (`interactions/pinch.ts` + the `usePianoRollInteractions` router,
+  which owns pointer routing by region: ruler / keyboard / grid).
+- **Ruler**: lower band click/drag seeks (scrubs); upper band hosts the
+  draggable loop brace (body moves, edges resize) and the clip-end marker
+  (`src/view/rulerHitTest.ts`, wider grab tolerance for touch).
 
 ### 2.6 Audio (`src/audio`)
 - `AudioEngine` owns the `AudioContext` and a lookahead scheduler (Chris Wilson
@@ -89,16 +102,15 @@ inside reducers.
 > separation: new data lives in slices, mutated only via actions/thunks; the canvas
 > and panels stay presentational.
 
-### 3.1 MIDI file load & save
-- **Import**: parse Standard MIDI Files (SMF type 0/1) into the domain model.
-  Map note-on/note-off pairs to `Note` (ticks scaled to project PPQ), import tempo
-  and time-signature meta events into `transportSlice`. Use a small parser
-  (e.g. `@tonejs/midi` or a hand-rolled reader) behind a `midi/io` module that emits
-  plain domain objects — the store never sees raw MIDI bytes.
-- **Export**: serialize notes + tempo/meta back to SMF; trigger a download
-  (browser) or native save dialog (Electron, behind a capability check).
-- New slice/thunks: `projectSlice` (file name, dirty flag), `importMidi`/`exportMidi`
-  thunks. Drag-and-drop a `.mid` file onto the editor to import.
+### 3.1 MIDI file load & save — ✅ implemented
+Shipped as designed (see §2.2/§2.5): a hand-rolled SMF reader/writer in
+`src/midi/` (`smfParse.ts` handles type 0/1, running status, PPQ rescaling;
+`smfEncode.ts` writes type 0) emits plain domain objects — the store never sees
+raw MIDI bytes. `projectSlice` (file name, dirty flag) plus
+`importMidiData`/`importMidiFile`/`exportMidi` thunks; toolbar buttons,
+`Ctrl/Cmd+O`/`Ctrl/Cmd+S`, and drag-and-drop of `.mid` files onto the window.
+Still open: native save dialog in the Electron wrapper (browser download is
+used everywhere today).
 
 ### 3.2 Controllers, automation & messages
 - **Per-note expression**: velocity already exists; add an editable **velocity lane**

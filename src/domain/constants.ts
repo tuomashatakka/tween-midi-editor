@@ -14,6 +14,13 @@ export const RULER_HEIGHT = 28
 // Resize-edge hit threshold in pixels.
 export const RESIZE_EDGE_PX = 6
 
+// Ruler marker (loop edge / clip end) grab tolerance in pixels.
+export const RULER_EDGE_TOL_PX = 6
+export const RULER_EDGE_TOL_TOUCH_PX = 14
+
+// Minimum finger spread (px) on an axis before a pinch zooms that axis.
+export const PINCH_MIN_SPREAD_PX = 24
+
 // Default viewport zoom.
 export const DEFAULT_PX_PER_TICK = 80 / PPQ // ~80px per quarter note
 export const DEFAULT_ROW_HEIGHT = 16 // px per semitone

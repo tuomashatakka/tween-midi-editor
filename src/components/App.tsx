@@ -5,13 +5,15 @@ import { PianoRoll } from './PianoRoll/PianoRoll'
 import { PreferencesPanel } from './PreferencesPanel'
 import { useKeyboardShortcuts } from '@/keymap/useKeyboardShortcuts'
 import { useAudioBridge } from '@/audio/useAudioBridge'
+import { useMidiDrop } from './useMidiDrop'
 
 
 export const App = () => {
-  const [preferencesOpen, setPreferencesOpen] = useState(false)
+  const [ preferencesOpen, setPreferencesOpen ] = useState(false)
 
   useKeyboardShortcuts()
   useAudioBridge()
+  useMidiDrop()
 
   return <div className="app">
     <header className="topbar">
@@ -21,8 +23,8 @@ export const App = () => {
 
     <main className="editor">
       <PianoRoll />
-      {preferencesOpen &&
-        <PreferencesPanel onClose={ () => setPreferencesOpen(false) } />
+
+      {preferencesOpen ? <PreferencesPanel onClose={ () => setPreferencesOpen(false) } /> : null
       }
     </main>
   </div>

@@ -4,7 +4,7 @@ import {
   DEFAULT_BPM,
   DEFAULT_TIME_SIGNATURE,
 } from '@/domain/constants'
-import { ticksPerBar } from '@/domain/time'
+import { ticksPerBar, ticksPerBeat } from '@/domain/time'
 import type { LoopRegion, Ticks, TimeSignature } from '@/domain/types'
 
 
@@ -13,6 +13,7 @@ interface TransportState {
   bpm:           number
   positionTicks: Ticks
   loop:          LoopRegion
+  clipEndTicks:  Ticks
   timeSignature: TimeSignature
   metronome:     boolean
 }
@@ -26,6 +27,7 @@ const initialState: TransportState = {
     startTicks: 0,
     endTicks:   ticksPerBar(DEFAULT_TIME_SIGNATURE) * 4,
   },
+  clipEndTicks:  ticksPerBar(DEFAULT_TIME_SIGNATURE) * 4,
   timeSignature: DEFAULT_TIME_SIGNATURE,
   metronome:     false,
 }
@@ -57,10 +59,18 @@ const transportSlice = createSlice({
       state.positionTicks = Math.max(0, action.payload)
     },
     setLoop: (state, action: PayloadAction<Partial<LoopRegion>>) => {
-      state.loop = { ...state.loop, ...action.payload }
+      const next      = { ...state.loop, ...action.payload }
+      next.startTicks = Math.max(0, Math.round(next.startTicks))
+      next.endTicks   = Math.max(next.startTicks + 1, Math.round(next.endTicks))
+      state.loop      = next
     },
     toggleLoop: state => {
       state.loop.enabled = !state.loop.enabled
+    },
+
+    /** Clip end marker; playback stops here when looping is disabled. */
+    setClipEnd: (state, action: PayloadAction<Ticks>) => {
+      state.clipEndTicks = Math.max(ticksPerBeat(state.timeSignature), Math.round(action.payload))
     },
     setTimeSignature: (state, action: PayloadAction<TimeSignature>) => {
       state.timeSignature = action.payload
@@ -80,6 +90,7 @@ export const {
   seek,
   setLoop,
   toggleLoop,
+  setClipEnd,
   setTimeSignature,
   toggleMetronome,
 } = transportSlice.actions

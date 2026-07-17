@@ -1,8 +1,10 @@
 import type { Middleware } from '@reduxjs/toolkit'
-import { initialToolState, type ToolState } from './slices/toolSlice'
+import { initialToolState } from './slices/toolSlice'
+import type { ToolState } from './slices/toolSlice'
 import type { GridDivision } from '@/domain/types'
 
-const STORAGE_KEY = 'tween-midi-editor.preferences'
+
+const STORAGE_KEY               = 'tween-midi-editor.preferences'
 const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
 
 type PersistedPreferences = Pick<
@@ -45,7 +47,8 @@ export const loadToolPreferences = (): Partial<ToolState> => {
       preferences.playOnDraw = parsed.playOnDraw
 
     return preferences
-  } catch {
+  }
+  catch {
     return {}
   }
 }
@@ -73,7 +76,8 @@ export const preferencesMiddleware: Middleware = storeApi => next => action => {
   try {
     const state = storeApi.getState() as { tool: ToolState }
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selectPersistedPreferences(state.tool)))
-  } catch {
+  }
+  catch {
     // Persistence is best-effort: private browsing and storage quotas should not break editing.
   }
 

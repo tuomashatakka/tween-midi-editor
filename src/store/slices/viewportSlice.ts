@@ -45,8 +45,10 @@ const viewportSlice = createSlice({
       const { factor, anchorTicks } = action.payload
       const next                    = clamp(state.pxPerTick * factor, MIN_PX_PER_TICK, MAX_PX_PER_TICK)
       // Keep the anchor pixel fixed: solve for new scrollTicks.
-      state.scrollTicks =
-        anchorTicks - (anchorTicks - state.scrollTicks) * state.pxPerTick / next
+      state.scrollTicks = Math.max(
+        0,
+        anchorTicks - (anchorTicks - state.scrollTicks) * state.pxPerTick / next,
+      )
       state.pxPerTick = next
     },
 
@@ -57,8 +59,11 @@ const viewportSlice = createSlice({
     ) => {
       const { factor, anchorPitch } = action.payload
       const next                    = clamp(state.rowHeight * factor, MIN_ROW_HEIGHT, MAX_ROW_HEIGHT)
-      state.scrollPitch             =
-        anchorPitch + (state.scrollPitch - anchorPitch) * state.rowHeight / next
+      state.scrollPitch             = clamp(
+        anchorPitch + (state.scrollPitch - anchorPitch) * state.rowHeight / next,
+        0,
+        MAX_NOTE,
+      )
       state.rowHeight = next
     },
     setScroll: (

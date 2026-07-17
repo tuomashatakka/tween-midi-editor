@@ -11,7 +11,9 @@ export interface EngineProviders {
   getNotes:   () => Note[]
   getBpm:     () => number
   getLoop:    () => LoopRegion
+  getClipEnd: () => Ticks
   onPosition: (ticks: Ticks) => void
+  onClipEnd:  () => void
 }
 
 /**
@@ -132,12 +134,24 @@ export class AudioEngine {
       this.playStartTick +
       secondsToTicks(now + SCHEDULE_AHEAD_SEC - this.audioStartTime, bpm)
 
+    // With looping off, playback ends at the clip end marker. Starting at or
+    // past the marker plays freely instead of stopping instantly.
+    const clipEnd    = this.providers.getClipEnd()
+    const endsAtClip = !loop.enabled && this.playStartTick < clipEnd
+
+    if (endsAtClip && this.currentTick() >= clipEnd) {
+      this.providers.onClipEnd()
+      return
+    }
+
     let windowEnd = horizonTick
     let wrap      = false
     if (loop.enabled && horizonTick >= loop.endTicks) {
       windowEnd = loop.endTicks
       wrap = true
     }
+    else if (endsAtClip)
+      windowEnd = Math.min(horizonTick, clipEnd)
 
     this.scheduleRange(notes, this.cursorTick, windowEnd, bpm)
 

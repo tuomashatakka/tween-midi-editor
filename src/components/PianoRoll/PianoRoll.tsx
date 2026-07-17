@@ -2,15 +2,14 @@ import { useEffect, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { setViewportSize } from '@/store/slices/viewportSlice'
 import { useCanvasRenderer } from './useCanvasRenderer'
-import { useToolInteractions } from './interactions/useToolInteractions'
+import { usePianoRollInteractions } from './interactions/usePianoRollInteractions'
 import type { Draft } from './interactions/types'
 
 
 const TOOL_CURSOR: Record<string, string> = {
-  select:  'default',
-  pan:     'grab',
-  draw:    'crosshair',
-  marquee: 'crosshair',
+  select: 'default',
+  pan:    'grab',
+  draw:   'crosshair',
 }
 
 export const PianoRoll = () => {
@@ -21,7 +20,7 @@ export const PianoRoll = () => {
   const tool         = useAppSelector(s => s.tool.active)
 
   const requestRedraw = useCanvasRenderer(canvasRef, draftRef)
-  const handlers      = useToolInteractions(draftRef, requestRedraw)
+  const handlers      = usePianoRollInteractions(canvasRef, draftRef, requestRedraw)
 
   // Keep the viewport size in sync with the container.
   useEffect(() => {
@@ -46,7 +45,6 @@ export const PianoRoll = () => {
       onPointerDown={ handlers.onPointerDown }
       onPointerMove={ handlers.onPointerMove }
       onPointerUp={ handlers.onPointerUp }
-      onPointerCancel={ handlers.onPointerUp }
-      onWheel={ handlers.onWheel } />
+      onPointerCancel={ handlers.onPointerUp } />
   </div>
 }

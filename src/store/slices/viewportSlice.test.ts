@@ -36,4 +36,12 @@ describe('viewportSlice', () => {
     const after  = reducer(before, panBy({ dxPx: 100000, dyPx: 0 }))
     expect(after.scrollTicks).toBe(0)
   })
+
+  it('zoomX never scrolls past tick 0 when zooming out near the origin', () => {
+    const before = reducer(undefined, { type: '@@INIT' })
+    // Zooming out anchored right of the origin would otherwise solve for a
+    // negative scrollTicks and expose bars before 1.
+    const after = reducer(before, zoomX({ factor: 0.25, anchorTicks: before.scrollTicks + 500 }))
+    expect(after.scrollTicks).toBe(0)
+  })
 })

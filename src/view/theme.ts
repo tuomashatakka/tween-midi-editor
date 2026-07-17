@@ -22,4 +22,9 @@ export const theme = {
   draftNote:     'rgba(255,209,102,0.5)',
   waveformFill:  'rgba(255,255,255,0.10)',
   waveformLine:  'rgba(255,255,255,0.55)',
+  loopBrace:     '#ffd166',
+  loopBraceDim:  'rgba(255,209,102,0.30)',
+  loopHandle:    '#ffe3a1',
+  clipEnd:       '#9aa0ad',
+  beyondClipEnd: 'rgba(0,0,0,0.28)',
 } as const

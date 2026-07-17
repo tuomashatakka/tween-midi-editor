@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import reducer, {
   addNote,
   moveNotesBy,
+  setAllNotes,
   setNoteVelocity,
   updateNote,
   notesAdapter,
@@ -47,5 +48,14 @@ describe('notesSlice', () => {
     let state = reducer(empty, addNote({ id: 'd', pitch: 60, start: 0, duration: 100, velocity: 50 }))
     state = reducer(state, updateNote({ id: 'd', changes: { duration: -50 }}))
     expect(selectors.selectById(state, 'd')!.duration).toBe(1)
+  })
+
+  it('setAllNotes replaces the whole collection', () => {
+    let state = reducer(empty, addNote({ id: 'gone', pitch: 60, start: 0, duration: 100, velocity: 50 }))
+    state = reducer(state, setAllNotes([
+      { id: 'n1', pitch: 61, start: 0, duration: 10, velocity: 100 },
+      { id: 'n2', pitch: 62, start: 10, duration: 10, velocity: 100 },
+    ]))
+    expect(selectors.selectAll(state).map(n => n.id)).toEqual([ 'n1', 'n2' ])
   })
 })

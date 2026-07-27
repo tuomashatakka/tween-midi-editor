@@ -2,6 +2,11 @@ import { createEntityAdapter, createSlice, nanoid } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { MAX_NOTE, MIN_NOTE } from '@/domain/constants'
 import type { MidiNote, Note, NoteId, Ticks, Velocity } from '@/domain/types'
+import {
+  deleteTrackWithNotes,
+  loadDocument,
+  replaceRangeNotes,
+} from '../documentActions'
 
 
 const clampPitch = (p: number): MidiNote =>
@@ -21,6 +26,7 @@ const notesSlice = createSlice({
       prepare: (note: Omit<Note, 'id'> & { id?: NoteId }) => ({
         payload: {
           id:       note.id ?? nanoid(),
+          trackId:  note.trackId,
           pitch:    clampPitch(note.pitch),
           start:    clampStart(note.start),
           duration: Math.max(1, Math.round(note.duration)),
@@ -93,6 +99,31 @@ const notesSlice = createSlice({
       if (note)
         note.velocity = clampVelocity(action.payload.velocity)
     },
+  },
+
+  // Document-wide actions are handled here and in tracksSlice so they undo as a
+  // single step. See src/store/documentActions.ts.
+  extraReducers: builder => {
+    builder
+      .addCase(deleteTrackWithNotes, (state, action) => {
+        notesAdapter.removeMany(state, action.payload.noteIds)
+      })
+      .addCase(loadDocument, (state, action) => {
+        notesAdapter.setAll(state, action.payload.notes)
+      })
+      .addCase(replaceRangeNotes, (state, action) => {
+        const { trackIds, fromTick, toTick, notes } = action.payload
+        const targets                               = new Set(trackIds)
+        const doomed                                = state.ids.filter(id => {
+          const note = state.entities[id]
+          return !!note &&
+            targets.has(note.trackId) &&
+            note.start < toTick &&
+            note.start + note.duration > fromTick
+        })
+        notesAdapter.removeMany(state, doomed)
+        notesAdapter.addMany(state, notes)
+      })
   },
 })
 

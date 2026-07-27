@@ -4,8 +4,8 @@ import type { RootState } from '../store'
 import { noteEnd } from '@/domain/time'
 import type { Note, Ticks } from '@/domain/types'
 
-// Notes live under the redux-undo `present` slice.
-const selectNotesState = (state: RootState) => state.notes.present
+// Notes and tracks share one redux-undo history under `document`.
+const selectNotesState = (state: RootState) => state.document.present.notes
 
 const adapterSelectors = notesAdapter.getSelectors(selectNotesState)
 

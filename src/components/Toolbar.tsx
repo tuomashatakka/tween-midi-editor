@@ -7,6 +7,7 @@ import {
   Volume2,
   Settings,
   FolderOpen,
+  ListMusic,
   Save,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -17,6 +18,7 @@ import {
   toggleTriplet,
   toggleWaveform,
   togglePlayOnDraw,
+  toggleTrackDrawer,
 } from '@/store/slices/toolSlice'
 import { exportMidi, importMidiFile } from '@/thunks/projectThunks'
 import { openMidiPicker } from '@/midi/filePicker'
@@ -43,6 +45,7 @@ export const Toolbar = ({ onOpenPreferences }: ToolbarProps) => {
   const triplet      = useAppSelector(s => s.tool.triplet)
   const showWaveform = useAppSelector(s => s.tool.showWaveform)
   const playOnDraw   = useAppSelector(s => s.tool.playOnDraw)
+  const drawerOpen   = useAppSelector(s => s.tool.trackDrawerOpen)
   const fileName     = useAppSelector(s => s.project.fileName)
   const dirty        = useAppSelector(s => s.project.dirty)
 
@@ -53,6 +56,18 @@ export const Toolbar = ({ onOpenPreferences }: ToolbarProps) => {
   }
 
   return <div className="toolbar">
+    <div className="toolbar__group">
+      <button
+        type="button"
+        title="Tracks (T)"
+        aria-label="Toggle track drawer"
+        aria-pressed={ drawerOpen }
+        className={ `tool-btn${drawerOpen ? ' tool-btn--active' : ''}` }
+        onClick={ () => dispatch(toggleTrackDrawer()) }>
+        <ListMusic size={ 16 } />
+      </button>
+    </div>
+
     <div className="toolbar__group">
       <button
         className="tool-btn"

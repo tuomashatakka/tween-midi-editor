@@ -9,7 +9,13 @@ const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
 
 type PersistedPreferences = Pick<
   ToolState,
-  'snapEnabled' | 'division' | 'triplet' | 'defaultNoteDuration' | 'showWaveform' | 'playOnDraw'
+  | 'snapEnabled' |
+  'division' |
+  'triplet' |
+  'defaultNoteDuration' |
+  'showWaveform' |
+  'playOnDraw' |
+  'trackDrawerOpen'
 >
 
 const isGridDivision = (value: unknown): value is GridDivision =>
@@ -45,6 +51,8 @@ export const loadToolPreferences = (): Partial<ToolState> => {
       preferences.showWaveform = parsed.showWaveform
     if (typeof parsed.playOnDraw === 'boolean')
       preferences.playOnDraw = parsed.playOnDraw
+    if (typeof parsed.trackDrawerOpen === 'boolean')
+      preferences.trackDrawerOpen = parsed.trackDrawerOpen
 
     return preferences
   }
@@ -60,12 +68,18 @@ const selectPersistedPreferences = (tool: ToolState): PersistedPreferences => ({
   defaultNoteDuration: tool.defaultNoteDuration,
   showWaveform:        tool.showWaveform,
   playOnDraw:          tool.playOnDraw,
+  trackDrawerOpen:     tool.trackDrawerOpen,
 })
 
 export const persistedToolState: ToolState = {
   ...initialToolState,
   ...loadToolPreferences(),
 }
+
+// The middleware runs on every dispatched action, including the ~40/s
+// `transport/setPosition` from the audio engine. Serializing once and comparing
+// against the last written value keeps localStorage out of the hot path.
+let lastWritten: string | null = null
 
 export const preferencesMiddleware: Middleware = storeApi => next => action => {
   const result = next(action)
@@ -74,8 +88,13 @@ export const preferencesMiddleware: Middleware = storeApi => next => action => {
     return result
 
   try {
-    const state = storeApi.getState() as { tool: ToolState }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selectPersistedPreferences(state.tool)))
+    const state      = storeApi.getState() as { tool: ToolState }
+    const serialized = JSON.stringify(selectPersistedPreferences(state.tool))
+    if (serialized === lastWritten)
+      return result
+
+    window.localStorage.setItem(STORAGE_KEY, serialized)
+    lastWritten = serialized
   }
   catch {
     // Persistence is best-effort: private browsing and storage quotas should not break editing.

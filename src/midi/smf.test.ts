@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Note } from '@/domain/types'
 import { encodeSmf } from './smfEncode'
 import { parseSmf } from './smfParse'
+import { groupParsedNotesIntoTracks } from './trackMapping'
 import { readVarLen, writeVarLen } from './vlq'
 
 
@@ -33,14 +34,22 @@ describe('variable-length quantities', () => {
 })
 
 const notes: Note[] = [
-  { id: 'a', pitch: 60, start: 0, duration: 480, velocity: 100 },
-  { id: 'b', pitch: 64, start: 480, duration: 960, velocity: 90 },
-  { id: 'c', pitch: 67, start: 480, duration: 240, velocity: 127 },
+  { id: 'a', trackId: 't1', pitch: 60, start: 0, duration: 480, velocity: 100 },
+  { id: 'b', trackId: 't1', pitch: 64, start: 480, duration: 960, velocity: 90 },
+  { id: 'c', trackId: 't1', pitch: 67, start: 480, duration: 240, velocity: 127 },
 ]
+
+const oneTrack = (trackNotes: Note[], name = 'Lead', channel = 0) =>
+  [{ name, channel, notes: trackNotes }]
 
 describe('SMF encode/parse roundtrip', () => {
   it('preserves notes, bpm and time signature at PPQ 960', () => {
-    const bytes  = encodeSmf({ notes, bpm: 132, timeSignature: { numerator: 3, denominator: 4 }, ppq: 960 })
+    const bytes  = encodeSmf({
+      tracks:        oneTrack(notes),
+      bpm:           132,
+      timeSignature: { numerator: 3, denominator: 4 },
+      ppq:           960,
+    })
     const parsed = parseSmf(bytes, 960)
 
     expect(parsed.bpm).toBeCloseTo(132, 1)
@@ -57,11 +66,53 @@ describe('SMF encode/parse roundtrip', () => {
   })
 
   it('rescales ticks when the file PPQ differs from the target', () => {
-    const bytes  = encodeSmf({ notes, bpm: 120, timeSignature: { numerator: 4, denominator: 4 }, ppq: 480 })
+    const bytes  = encodeSmf({
+      tracks:        oneTrack(notes),
+      bpm:           120,
+      timeSignature: { numerator: 4, denominator: 4 },
+      ppq:           480,
+    })
     const parsed = parseSmf(bytes, 960)
     const first  = parsed.notes[0]
     expect(first.start).toBe(0)
     expect(first.duration).toBe(960) // 480 ticks at PPQ 480 = one quarter = 960 at PPQ 960
+  })
+
+  it('preserves track names, channels and notes across three tracks', () => {
+    const exported = [
+      { name: 'Bass', channel: 0, notes: [ notes[0] ]},
+      { name: 'Keys', channel: 4, notes: [ notes[1] ]},
+      { name: 'Empty', channel: 9, notes: []},
+    ]
+    const bytes  = encodeSmf({
+      tracks:        exported,
+      bpm:           120,
+      timeSignature: { numerator: 4, denominator: 4 },
+      ppq:           960,
+    })
+    const parsed = parseSmf(bytes, 960)
+    const seeds  = groupParsedNotesIntoTracks(parsed)
+
+    // Chunk 0 is the conductor track, which carries no notes and no seed. The
+    // silent third track does survive — its channel comes from the channel
+    // prefix meta, since it has no note events to infer one from.
+    expect(parsed.tracks[0].name).toBe('Conductor')
+    expect(seeds.map(s => s.name)).toEqual([ 'Bass', 'Keys', 'Empty' ])
+    expect(seeds.map(s => s.channel)).toEqual([ 0, 4, 9 ])
+    expect(seeds[2].notes).toEqual([])
+    expect(seeds[0].notes[0]).toMatchObject({ pitch: 60, start: 0, duration: 480, velocity: 100 })
+    expect(seeds[1].notes[0]).toMatchObject({ pitch: 64, start: 480, duration: 960, velocity: 90 })
+  })
+
+  it('writes a format 1 header with a conductor chunk', () => {
+    const bytes = encodeSmf({
+      tracks:        oneTrack(notes),
+      bpm:           120,
+      timeSignature: { numerator: 4, denominator: 4 },
+      ppq:           960,
+    })
+    expect((bytes[8] << 8) + bytes[9]).toBe(1) // format
+    expect((bytes[10] << 8) + bytes[11]).toBe(2) // conductor + one track
   })
 })
 
@@ -89,7 +140,7 @@ function smf (format: number, division: number, ...tracks: number[][]): Uint8Arr
 const END_OF_TRACK = [ 0x00, 0xff, 0x2f, 0x00 ]
 
 describe('SMF parsing details', () => {
-  it('merges notes across the tracks of a format 1 file', () => {
+  it('reports the source track and channel of each note in a format 1 file', () => {
     const tempoTrack = track(
       [ 0x00, 0xff, 0x51, 0x03, 0x07, 0xa1, 0x20 ], // 500000 us/quarter = 120 bpm
       END_OF_TRACK,
@@ -108,9 +159,12 @@ describe('SMF parsing details', () => {
     const parsed = parseSmf(smf(1, 96, tempoTrack, noteTrack1, noteTrack2), 96)
     expect(parsed.bpm).toBe(120)
     expect(parsed.notes).toEqual([
-      { pitch: 60, start: 0, duration: 96, velocity: 100 },
-      { pitch: 64, start: 48, duration: 48, velocity: 80 },
+      { pitch: 60, start: 0, duration: 96, velocity: 100, sourceTrack: 1, channel: 0 },
+      { pitch: 64, start: 48, duration: 48, velocity: 80, sourceTrack: 2, channel: 1 },
     ])
+    // The conductor chunk is still reported, it just carries no notes.
+    expect(parsed.tracks).toHaveLength(3)
+    expect(parsed.tracks.map(t => t.channel)).toEqual([ undefined, 0, 1 ])
   })
 
   it('handles running status', () => {
@@ -123,8 +177,8 @@ describe('SMF parsing details', () => {
     )
     const parsed = parseSmf(smf(0, 96, t), 96)
     expect(parsed.notes).toEqual([
-      { pitch: 60, start: 0, duration: 96, velocity: 100 },
-      { pitch: 64, start: 0, duration: 96, velocity: 100 },
+      { pitch: 60, start: 0, duration: 96, velocity: 100, sourceTrack: 0, channel: 0 },
+      { pitch: 64, start: 0, duration: 96, velocity: 100, sourceTrack: 0, channel: 0 },
     ])
   })
 
@@ -135,7 +189,7 @@ describe('SMF parsing details', () => {
     )
     const parsed = parseSmf(smf(0, 96, t), 96)
     expect(parsed.notes).toEqual([
-      { pitch: 60, start: 0, duration: 96, velocity: 100 },
+      { pitch: 60, start: 0, duration: 96, velocity: 100, sourceTrack: 0, channel: 0 },
     ])
   })
 

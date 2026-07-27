@@ -1,7 +1,11 @@
 import { useCallback, useMemo, useRef } from 'react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useAppStore } from '@/store/hooks'
-import { selectAllNotes } from '@/store/selectors/noteSelectors'
+import { selectNoteEntities } from '@/store/selectors/noteSelectors'
+import {
+  selectActiveTrackId,
+  selectEditableNotes,
+} from '@/store/selectors/trackSelectors'
 import { selectViewport } from '@/store/selectors/viewportSelectors'
 import {
   addNote,
@@ -45,12 +49,14 @@ function beginDrawGesture (
   gesture: Gesture,
   draftRef: React.MutableRefObject<Draft>,
 ) {
-  const { division, triplet, defaultNoteDuration, playOnDraw } = store.getState().tool
+  const state                                                  = store.getState()
+  const { division, triplet, defaultNoteDuration, playOnDraw } = state.tool
+  const trackId                                                = selectActiveTrackId(state)
 
   const pitch = yToPitchLane(py, vp)
   const start = floorToGrid(xToTick(px, vp), division, triplet)
   const id    = nanoid()
-  store.dispatch(addNote({ id, pitch, start, duration: defaultNoteDuration, velocity: 100 }))
+  store.dispatch(addNote({ id, trackId, pitch, start, duration: defaultNoteDuration, velocity: 100 }))
   store.dispatch(selectOne(id))
   if (playOnDraw)
     playPreview(pitch, 100)
@@ -77,10 +83,12 @@ export function useToolInteractions (
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      const state      = store.getState()
-      const tool       = state.tool.active
-      const vp         = selectViewport(state)
-      const notes      = selectAllNotes(state)
+      const state = store.getState()
+      const tool  = state.tool.active
+      const vp    = selectViewport(state)
+      // Only editable tracks are hit-testable, so clicks fall through a locked
+      // or hidden track's notes to the grid underneath.
+      const notes      = selectEditableNotes(state)
       const [ px, py ] = localPoint(e)
 
       gesture.current = { startX: px, startY: py, lastX: px, lastY: py, anchorStart: 0, resizeBase: 0 }
@@ -195,7 +203,7 @@ export function useToolInteractions (
 
       const state = store.getState()
       const vp    = selectViewport(state)
-      const notes = selectAllNotes(state)
+      const notes = selectEditableNotes(state)
 
       if (draft.kind === 'marquee' && g) {
         const rect = rectFromPoints(g.startX, g.startY, draft.x2, draft.y2)
@@ -208,9 +216,11 @@ export function useToolInteractions (
       }
       else if (draft.kind === 'resize') {
         if (draft.deltaDuration !== 0) {
-          const byId    = new Map(notes.map(n => [ n.id, n ]))
+          // Look the notes up by id rather than in the editable list: a lock
+          // could have changed mid-gesture and the drag still has to commit.
+          const byId    = selectNoteEntities(state)
           const updates = draft.noteIds
-            .map(id => byId.get(id))
+            .map(id => byId[id])
             .filter((n): n is NonNullable<typeof n> => !!n)
             .map(n => ({ id: n.id, changes: { duration: Math.max(1, n.duration + draft.deltaDuration) }}))
           store.dispatch(updateNotes(updates))

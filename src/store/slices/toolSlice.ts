@@ -12,6 +12,13 @@ export interface ToolState {
   defaultNoteDuration: Ticks
   showWaveform:        boolean
   playOnDraw:          boolean
+
+  /**
+   * Left track drawer visibility. It lives in the store rather than in React
+   * state because `SHORTCUTS[].run` only receives `{ dispatch, getState }` and
+   * the drawer has a keyboard shortcut.
+   */
+  trackDrawerOpen: boolean
 }
 
 export const initialToolState: ToolState = {
@@ -22,6 +29,7 @@ export const initialToolState: ToolState = {
   defaultNoteDuration: DEFAULT_NOTE_DURATION,
   showWaveform:        true,
   playOnDraw:          true,
+  trackDrawerOpen:     false,
 }
 
 const DIVISIONS: GridDivision[] = [ 1, 2, 4, 8, 16, 32 ]
@@ -81,6 +89,14 @@ const toolSlice = createSlice({
     setPlayOnDraw: (state, action: PayloadAction<boolean>) => {
       state.playOnDraw = action.payload
     },
+
+    /** Toggle the left track drawer. */
+    toggleTrackDrawer: state => {
+      state.trackDrawerOpen = !state.trackDrawerOpen
+    },
+    setTrackDrawerOpen: (state, action: PayloadAction<boolean>) => {
+      state.trackDrawerOpen = action.payload
+    },
   },
 })
 
@@ -98,6 +114,8 @@ export const {
   setShowWaveform,
   togglePlayOnDraw,
   setPlayOnDraw,
+  toggleTrackDrawer,
+  setTrackDrawerOpen,
 } = toolSlice.actions
 
 export default toolSlice.reducer

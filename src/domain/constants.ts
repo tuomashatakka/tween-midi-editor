@@ -7,6 +7,18 @@ export const PPQ = 960
 export const MIN_NOTE = 0
 export const MAX_NOTE = 127
 
+// Tracks. The default track id is a constant rather than a nanoid so the
+// initial state (and therefore every reducer snapshot and test store) is
+// reproducible.
+export const DEFAULT_TRACK_ID = 'track-1'
+export const MIDI_CHANNELS = 16
+
+// Alpha multiplier applied to every track except the active one.
+export const TRACK_DIM_ALPHA = 0.5
+
+// Keeps an SMF track-name meta length within a single-byte VLQ.
+export const MAX_TRACK_NAME_BYTES = 127
+
 // Layout constants for the canvas chrome (in CSS pixels).
 export const KEYBOARD_WIDTH = 64
 export const RULER_HEIGHT = 28

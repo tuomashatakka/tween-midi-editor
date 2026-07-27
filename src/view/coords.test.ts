@@ -42,7 +42,7 @@ describe('coordinate transforms', () => {
   })
 
   it('builds a note rect spanning its lane and duration', () => {
-    const r = noteRect({ id: 'a', pitch: 60, start: 100, duration: 480, velocity: 100 }, vp)
+    const r = noteRect({ id: 'a', trackId: 't1', pitch: 60, start: 100, duration: 480, velocity: 100 }, vp)
     expect(r.x).toBe(vp.keyboardWidth)
     expect(r.w).toBeCloseTo(480 * vp.pxPerTick)
     expect(r.h).toBe(vp.rowHeight)

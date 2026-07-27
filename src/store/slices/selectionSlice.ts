@@ -1,13 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
-import type { NoteId } from '@/domain/types'
+import { DEFAULT_TRACK_ID } from '@/domain/constants'
+import type { NoteId, TrackId } from '@/domain/types'
 
 
 interface SelectionState {
   selectedIds: NoteId[]
+
+  /**
+   * The track being edited. It belongs here rather than in `tracksSlice`
+   * because tracks live inside the undo history and undoing a note edit must
+   * not also jump you to a different track.
+   */
+  activeTrackId: TrackId
 }
 
-const initialState: SelectionState = { selectedIds: []}
+const initialState: SelectionState = {
+  selectedIds:   [],
+  activeTrackId: DEFAULT_TRACK_ID,
+}
 
 const selectionSlice = createSlice({
   name:     'selection',
@@ -37,6 +48,9 @@ const selectionSlice = createSlice({
     clearSelection: state => {
       state.selectedIds = []
     },
+    setActiveTrack: (state, action: PayloadAction<TrackId>) => {
+      state.activeTrackId = action.payload
+    },
   },
 })
 
@@ -46,6 +60,7 @@ export const {
   toggleSelection,
   setSelection,
   clearSelection,
+  setActiveTrack,
 } = selectionSlice.actions
 
 export default selectionSlice.reducer

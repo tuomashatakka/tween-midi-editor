@@ -1,33 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { configureStore, combineReducers } from '@reduxjs/toolkit'
-import undoable from 'redux-undo'
-import notesReducer, { addNotes } from '@/store/slices/notesSlice'
-import projectReducer from '@/store/slices/projectSlice'
-import selectionReducer, { setSelection } from '@/store/slices/selectionSlice'
-import toolReducer from '@/store/slices/toolSlice'
-import transportReducer from '@/store/slices/transportSlice'
-import viewportReducer from '@/store/slices/viewportSlice'
+import { configureStore } from '@reduxjs/toolkit'
+import { addNotes } from '@/store/slices/notesSlice'
+import { setSelection } from '@/store/slices/selectionSlice'
+import { rootReducer } from '@/store/store'
 import { selectAllNotes } from '@/store/selectors/noteSelectors'
-import { duplicateSelection, deleteSelected, transposeSelected } from './editingThunks'
+import {
+  duplicateSelection,
+  deleteSelected,
+  retargetClipboard,
+  transposeSelected,
+} from './editingThunks'
+import { DEFAULT_TRACK_ID } from '@/domain/constants'
 import type { Note } from '@/domain/types'
 
 
-function makeStore () {
-  return configureStore({
-    reducer: combineReducers({
-      notes:     undoable(notesReducer),
-      project:   projectReducer,
-      selection: selectionReducer,
-      tool:      toolReducer,
-      transport: transportReducer,
-      viewport:  viewportReducer,
-    }),
-  })
-}
+const makeStore = () => configureStore({ reducer: rootReducer })
 
 const notes: Note[] = [
-  { id: 'a', pitch: 60, start: 0, duration: 480, velocity: 100 },
-  { id: 'b', pitch: 64, start: 480, duration: 480, velocity: 100 },
+  { id: 'a', trackId: DEFAULT_TRACK_ID, pitch: 60, start: 0, duration: 480, velocity: 100 },
+  { id: 'b', trackId: DEFAULT_TRACK_ID, pitch: 64, start: 480, duration: 480, velocity: 100 },
 ]
 
 describe('editing thunks', () => {
@@ -64,5 +55,30 @@ describe('editing thunks', () => {
 
     const a = selectAllNotes(store.getState()).find(n => n.id === 'a')!
     expect(a.pitch).toBe(72)
+  })
+})
+
+describe('retargetClipboard', () => {
+  const existing = new Set([ 'one', 'two' ])
+  const on       = (id: string, trackId: string): Note => ({
+    ...notes[0], id, trackId,
+  })
+
+  it('moves a single-track clipboard onto the active track', () => {
+    const clip = [ on('a', 'one'), on('b', 'one') ]
+    expect(retargetClipboard(clip, 'two', existing).map(n => n.trackId))
+      .toEqual([ 'two', 'two' ])
+  })
+
+  it('preserves the shape of a multi-track clipboard', () => {
+    const clip = [ on('a', 'one'), on('b', 'two') ]
+    expect(retargetClipboard(clip, 'one', existing).map(n => n.trackId))
+      .toEqual([ 'one', 'two' ])
+  })
+
+  it('falls back to the active track when a source track is gone', () => {
+    const clip = [ on('a', 'one'), on('b', 'deleted') ]
+    expect(retargetClipboard(clip, 'two', existing).map(n => n.trackId))
+      .toEqual([ 'one', 'two' ])
   })
 })

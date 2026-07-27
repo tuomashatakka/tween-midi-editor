@@ -18,17 +18,16 @@ export const divisionTicks = (division: number, triplet = false): Ticks => {
   return triplet ? base * 2 / 3 : base
 }
 
+/** Snap a tick value to the nearest multiple of a step (0 leaves it alone). */
+export const snapToStep = (t: Ticks, step: Ticks): Ticks =>
+  step <= 0 ? t : Math.round(t / step) * step
+
 /** Snap a tick value to the nearest grid step. */
 export const snapTicks = (
   t: Ticks,
   division: number,
   triplet = false,
-): Ticks => {
-  const step = divisionTicks(division, triplet)
-  if (step <= 0)
-    return t
-  return Math.round(t / step) * step
-}
+): Ticks => snapToStep(t, divisionTicks(division, triplet))
 
 /** Snap a tick value down to the grid step at or before it (for note placement). */
 export const floorToGrid = (

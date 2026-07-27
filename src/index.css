@@ -5,6 +5,7 @@
   --text: #d7dae2;
   --text-dim: #9aa0ad;
   --accent: #5b8def;
+  --rec: #e5484d;
   color-scheme: dark;
 }
 
@@ -141,13 +142,17 @@ body {
 }
 
 .editor {
+  display: flex;
   flex: 1;
   min-height: 0;
 }
 
+/* flex:1 + min-width:0 lets the drawer take width and the canvas reflow; the
+   piano roll's ResizeObserver keeps the viewport in sync by itself. */
 .piano-roll {
   position: relative;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 100%;
 }
 
@@ -243,4 +248,233 @@ body {
   width: 16px;
   height: 16px;
   accent-color: var(--accent);
+}
+
+/* --- Track drawer ------------------------------------------------------- */
+
+.track-drawer {
+  display: flex;
+  flex: 0 0 232px;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  user-select: none;
+}
+
+.track-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.track-drawer__header h2 {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.track-drawer__header-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.track-drawer__list {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.track-row {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    'swatch name'
+    'controls controls'
+    'routing routing';
+  grid-template-columns: auto 1fr;
+  gap: 6px 8px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
+}
+
+.track-row {
+  cursor: pointer;
+}
+
+.track-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.track-row--active {
+  background: rgba(255, 255, 255, 0.03);
+  border-left-color: var(--track-color, var(--accent));
+}
+
+.track-row__swatch {
+  position: relative;
+  grid-area: swatch;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.track-row__swatch-dot {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  background: var(--track-color, var(--accent));
+}
+
+.track-row__swatch input[type='color'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.track-row__name {
+  position: relative;
+  grid-area: name;
+  min-width: 0;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.track-row__name:hover {
+  border-color: var(--border);
+}
+
+.track-row__name:focus {
+  border-color: var(--accent);
+  background: #23252b;
+  outline: none;
+}
+
+.track-row__controls {
+  position: relative;
+  grid-area: controls;
+  display: flex;
+  gap: 2px;
+}
+
+.track-row__routing {
+  position: relative;
+  grid-area: routing;
+  display: flex;
+  gap: 4px;
+}
+
+.track-row__routing select {
+  min-width: 0;
+  height: 24px;
+  font-size: 11px;
+}
+
+.track-row__routing select:last-child {
+  flex: 1;
+}
+
+.tool-btn--tiny {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.tool-btn--tiny.tool-btn--text {
+  width: 22px;
+  padding: 0;
+}
+
+.tool-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tool-btn:disabled:hover {
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.tool-btn--rec {
+  color: var(--rec);
+  fill: var(--rec);
+}
+
+.tool-btn--rec svg {
+  fill: currentcolor;
+}
+
+@keyframes transport-count-in {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.tool-btn--counting {
+  animation: transport-count-in 0.5s ease-in-out infinite;
+}
+
+.transport__sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.transport__sync--waiting {
+  color: var(--text-dim);
+}
+
+.preferences__ports {
+  display: grid;
+  gap: 6px;
+  max-height: 132px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.preferences__note {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.preferences__row input[type='number'] {
+  width: 84px;
+  height: 30px;
+  background: #23252b;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
 }

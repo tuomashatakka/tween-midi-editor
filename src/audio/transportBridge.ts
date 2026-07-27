@@ -1,6 +1,7 @@
 import type { AppStore } from '@/store/store'
 import { seek, setPosition, stop } from '@/store/slices/transportSlice'
-import { selectAllNotes } from '@/store/selectors/noteSelectors'
+import { selectAudibleNotes } from '@/store/selectors/trackSelectors'
+import { selectRouting } from '@/store/selectors/midiSelectors'
 import { AudioEngine } from './AudioEngine'
 import { setActiveEngine } from './engine'
 
@@ -13,10 +14,19 @@ export function createAudioBridge (store: AppStore) {
   let lastEnginePos = -1
 
   const engine = new AudioEngine({
-    getNotes:   () => selectAllNotes(store.getState()),
-    getBpm:     () => store.getState().transport.bpm,
-    getLoop:    () => store.getState().transport.loop,
-    getClipEnd: () => store.getState().transport.clipEndTicks,
+    // Mute/solo is derived data, so it is a selector rather than engine state.
+    getNotes:        () => selectAudibleNotes(store.getState()),
+    // A track routed to a hardware port must not also sound on the synth.
+    playsInternally: note => !selectRouting(store.getState())[note.trackId]?.outputId,
+    getBpm:          () => store.getState().transport.bpm,
+    getLoop:         () => store.getState().transport.loop,
+    getClipEnd:      () => store.getState().transport.clipEndTicks,
+    metronome:       {
+      // The count-in is useless without a click, so recording forces it on.
+      isEnabled: () =>
+        store.getState().transport.metronome || store.getState().recording.countingIn,
+      getTimeSignature: () => store.getState().transport.timeSignature,
+    },
     onPosition: ticks => {
       lastEnginePos = ticks
       store.dispatch(setPosition(ticks))

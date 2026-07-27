@@ -2,13 +2,31 @@
 // domain objects out (ticks already rescaled to the project PPQ). Handles
 // running status, note-on velocity 0 as note-off, and skips unrecognized
 // meta/sysex events by their declared lengths.
+//
+// The parser *reports* what the file says — source track index, channel, track
+// name — and deliberately knows nothing about the `Track` domain type. Deciding
+// how those map onto editor tracks is policy and lives in `trackMapping.ts`.
 
-import type { Note, TimeSignature } from '@/domain/types'
+import type { MidiChannel, Note, TimeSignature } from '@/domain/types'
 import { readVarLen } from './vlq'
 
 
+export interface ParsedNote extends Omit<Note, 'id' | 'trackId'> {
+  sourceTrack: number
+  channel:     MidiChannel
+}
+
+export interface SmfTrackInfo {
+  index: number
+  name?: string
+
+  /** The single channel this track's notes used, when unambiguous. */
+  channel?: MidiChannel
+}
+
 export interface SmfImportResult {
-  notes:          Omit<Note, 'id'>[]
+  notes:          ParsedNote[]
+  tracks:         SmfTrackInfo[]
   bpm?:           number
   timeSignature?: TimeSignature
 }
@@ -43,21 +61,33 @@ export function parseSmf (bytes: Uint8Array, targetPpq: number): SmfImportResult
 
   const scale = (t: number): number => Math.round(t * targetPpq / division)
 
-  const result: SmfImportResult = { notes: []}
+  const result: SmfImportResult = { notes: [], tracks: []}
   let offset                    = 8 + headerLen
 
   for (let trackIndex = 0; trackIndex < ntrks && offset + 8 <= bytes.length; trackIndex++) {
     if (asciiAt(bytes, offset, 4) !== 'MTrk')
       throw new Error('Invalid MIDI file: expected MTrk chunk')
 
+    result.tracks.push({ index: trackIndex })
+
     const trackLen = readU32(bytes, offset + 4)
     const start    = offset + 8
     const end      = Math.min(start + trackLen, bytes.length)
-    new TrackParser(bytes, start, end, scale, result).run()
+    new TrackParser(bytes, start, end, scale, result, trackIndex).run()
     offset = start + trackLen
   }
 
-  result.notes.sort((a, b) => a.start - b.start || a.pitch - b.pitch)
+  // Record each track's channel when its notes all agree on one.
+  for (const info of result.tracks) {
+    const channels = new Set(
+      result.notes.filter(n => n.sourceTrack === info.index).map(n => n.channel),
+    )
+    if (channels.size === 1)
+      info.channel = [ ...channels ][0]
+  }
+
+  result.notes.sort((a, b) =>
+    a.start - b.start || a.sourceTrack - b.sourceTrack || a.pitch - b.pitch)
   return result
 }
 
@@ -77,6 +107,7 @@ class TrackParser {
     private end: number,
     private scale: (t: number) => number,
     private result: SmfImportResult,
+    private trackIndex: number,
   ) {
     this.offset = start
   }
@@ -119,13 +150,49 @@ class TrackParser {
     const type = this.bytes[this.offset]
     const len  = readVarLen(this.bytes, this.offset + 1)
 
-    if (type === 0x51 && len.value === 3)
-      this.readTempo(len.next)
-    if (type === 0x58 && len.value >= 2)
-      this.readTimeSignature(len.next)
+    switch (type) {
+      case 0x03: {
+        this.readTrackName(len.next, len.value)
+        break
+      }
+      case 0x20: {
+        // MIDI Channel Prefix — the only channel hint a note-less track has.
+        // Notes override it below when they say otherwise.
+        if (len.value === 1)
+          this.declareChannel(this.bytes[len.next])
+        break
+      }
+      case 0x51: {
+        if (len.value === 3)
+          this.readTempo(len.next)
+        break
+      }
+      case 0x58: {
+        if (len.value >= 2)
+          this.readTimeSignature(len.next)
+        break
+      }
+      default:
+        break
+    }
 
     this.offset = len.next + len.value
     return type === 0x2f
+  }
+
+  private declareChannel (channel: number) {
+    const info = this.result.tracks[this.trackIndex]
+    if (info)
+      info.channel = channel & 0x0f
+  }
+
+  /** Track name meta (FF 03). First occurrence in a chunk wins. */
+  private readTrackName (at: number, len: number) {
+    const info = this.result.tracks[this.trackIndex]
+    if (!info || info.name !== undefined || len === 0)
+      return
+    // Latin-1, matching asciiAt — identical in node and the browser.
+    info.name = asciiAt(this.bytes, at, len).trim() || undefined
   }
 
   private readTempo (at: number) {
@@ -202,9 +269,11 @@ class TrackParser {
       return
     this.result.notes.push({
       pitch,
-      start:    this.scale(open.startTick),
-      duration: Math.max(1, this.scale(endTick) - this.scale(open.startTick)),
-      velocity: open.velocity,
+      start:       this.scale(open.startTick),
+      duration:    Math.max(1, this.scale(endTick) - this.scale(open.startTick)),
+      velocity:    open.velocity,
+      sourceTrack: this.trackIndex,
+      channel:     key >>> 8,
     })
   }
 

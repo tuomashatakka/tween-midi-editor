@@ -10,14 +10,18 @@ import {
   setSelection,
 } from '@/store/slices/selectionSlice'
 import {
-  selectAllNotes,
   selectNoteEntities,
   selectSelectedNotes,
   selectSelectedTickSpan,
 } from '@/store/selectors/noteSelectors'
+import {
+  selectActiveTrackId,
+  selectAllTracks,
+  selectEditableNotes,
+} from '@/store/selectors/trackSelectors'
 import { selectEffectiveSnapTicks } from '@/store/selectors/viewportSelectors'
 import { divisionTicks, noteEnd } from '@/domain/time'
-import type { Note } from '@/domain/types'
+import type { Note, TrackId } from '@/domain/types'
 import { nanoid } from '@reduxjs/toolkit'
 
 
@@ -31,12 +35,37 @@ export const deleteSelected = (): Thunk => (dispatch, getState) => {
   dispatch(clearSelection())
 }
 
+// Only editable notes: Ctrl+A must not reach into hidden or locked tracks,
+// where a following Delete would destroy notes the user cannot see.
 export const selectAllNotesThunk = (): Thunk => (dispatch, getState) => {
-  const ids = selectAllNotes(getState()).map(n => n.id)
+  const ids = selectEditableNotes(getState()).map(n => n.id)
   dispatch(setSelection(ids))
 }
 
 let clipboard: Note[] = []
+
+/**
+ * Decide which track pasted notes land on.
+ *
+ * A clipboard from a single track is a riff being moved to another instrument,
+ * so it retargets to the active track. A multi-track clipboard is a slice of an
+ * arrangement, so it keeps its shape — except for notes whose source track has
+ * since been deleted, which fall back to the active track.
+ */
+export const retargetClipboard = (
+  clip: Note[],
+  activeTrackId: TrackId,
+  existingTrackIds: Set<TrackId>,
+): Note[] => {
+  const sources = new Set(clip.map(n => n.trackId))
+  if (sources.size <= 1)
+    return clip.map(n => ({ ...n, trackId: activeTrackId }))
+
+  return clip.map(n => ({
+    ...n,
+    trackId: existingTrackIds.has(n.trackId) ? n.trackId : activeTrackId,
+  }))
+}
 
 export const copySelection = (): Thunk => (_dispatch, getState) => {
   clipboard = selectSelectedNotes(getState()).map(n => ({ ...n }))
@@ -55,7 +84,9 @@ export const pasteAtPlayhead = (): Thunk => (dispatch, getState) => {
   const at            = state.transport.positionTicks
   const origin        = Math.min(...clipboard.map(n => n.start))
   const offset        = at - origin
-  const fresh: Note[] = clipboard.map(n => ({
+  const trackIds      = new Set(selectAllTracks(state).map(t => t.id))
+  const retargeted    = retargetClipboard(clipboard, selectActiveTrackId(state), trackIds)
+  const fresh: Note[] = retargeted.map(n => ({
     ...n,
     id:    nanoid(),
     start: Math.max(0, n.start + offset),

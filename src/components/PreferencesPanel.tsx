@@ -10,6 +10,8 @@ import {
 } from '@/store/slices/toolSlice'
 import { PPQ } from '@/domain/constants'
 import type { GridDivision } from '@/domain/types'
+import { MidiDevicesSection } from './MidiDevicesSection'
+import { MidiSyncSection } from './MidiSyncSection'
 
 
 interface PreferencesPanelProps {
@@ -108,5 +110,8 @@ export const PreferencesPanel = ({ onClose }: PreferencesPanelProps) => {
         <span>Show waveform overlays on notes</span>
       </label>
     </section>
+
+    <MidiDevicesSection />
+    <MidiSyncSection />
   </div>
 }

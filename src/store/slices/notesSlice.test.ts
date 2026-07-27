@@ -14,7 +14,7 @@ const selectors = notesAdapter.getSelectors()
 
 describe('notesSlice', () => {
   it('adds a note with a generated id and clamped values', () => {
-    const state = reducer(empty, addNote({ pitch: 200, start: -5, duration: 480, velocity: 999 }))
+    const state = reducer(empty, addNote({ trackId: 't1', pitch: 200, start: -5, duration: 480, velocity: 999 }))
     const notes = selectors.selectAll(state)
     expect(notes).toHaveLength(1)
     expect(notes[0].pitch).toBe(127)
@@ -24,7 +24,7 @@ describe('notesSlice', () => {
   })
 
   it('moveNotesBy clamps pitch 0..127 and start >= 0', () => {
-    let state = reducer(empty, addNote({ id: 'x', pitch: 1, start: 10, duration: 100, velocity: 50 }))
+    let state = reducer(empty, addNote({ id: 'x', trackId: 't1', pitch: 1, start: 10, duration: 100, velocity: 50 }))
     state = reducer(state, moveNotesBy({ ids: [ 'x' ], deltaTicks: -1000, deltaPitch: -5 }))
 
     const n = selectors.selectById(state, 'x')!
@@ -37,7 +37,7 @@ describe('notesSlice', () => {
   })
 
   it('setNoteVelocity clamps to 0..127', () => {
-    let state = reducer(empty, addNote({ id: 'v', pitch: 60, start: 0, duration: 100, velocity: 50 }))
+    let state = reducer(empty, addNote({ id: 'v', trackId: 't1', pitch: 60, start: 0, duration: 100, velocity: 50 }))
     state = reducer(state, setNoteVelocity({ id: 'v', velocity: 300 }))
     expect(selectors.selectById(state, 'v')!.velocity).toBe(127)
     state = reducer(state, setNoteVelocity({ id: 'v', velocity: -10 }))
@@ -45,16 +45,16 @@ describe('notesSlice', () => {
   })
 
   it('updateNote enforces a minimum duration of 1', () => {
-    let state = reducer(empty, addNote({ id: 'd', pitch: 60, start: 0, duration: 100, velocity: 50 }))
+    let state = reducer(empty, addNote({ id: 'd', trackId: 't1', pitch: 60, start: 0, duration: 100, velocity: 50 }))
     state = reducer(state, updateNote({ id: 'd', changes: { duration: -50 }}))
     expect(selectors.selectById(state, 'd')!.duration).toBe(1)
   })
 
   it('setAllNotes replaces the whole collection', () => {
-    let state = reducer(empty, addNote({ id: 'gone', pitch: 60, start: 0, duration: 100, velocity: 50 }))
+    let state = reducer(empty, addNote({ id: 'gone', trackId: 't1', pitch: 60, start: 0, duration: 100, velocity: 50 }))
     state = reducer(state, setAllNotes([
-      { id: 'n1', pitch: 61, start: 0, duration: 10, velocity: 100 },
-      { id: 'n2', pitch: 62, start: 10, duration: 10, velocity: 100 },
+      { id: 'n1', trackId: 't1', pitch: 61, start: 0, duration: 10, velocity: 100 },
+      { id: 'n2', trackId: 't1', pitch: 62, start: 10, duration: 10, velocity: 100 },
     ]))
     expect(selectors.selectAll(state).map(n => n.id)).toEqual([ 'n1', 'n2' ])
   })

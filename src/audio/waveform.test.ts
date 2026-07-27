@@ -23,7 +23,7 @@ describe('waveform helpers', () => {
   })
 
   it('visual cycle count is clamped by the available pixel width', () => {
-    const note: Note = { id: 'a', pitch: 96, start: 0, duration: PPQ, velocity: 100 }
+    const note: Note = { id: 'a', trackId: 't1', pitch: 96, start: 0, duration: PPQ, velocity: 100 }
     // A high pitch over a quarter note has hundreds of real cycles, but a 30px
     // wide note can show at most ~10 (30/3) so it stays legible.
     expect(visualCycleCount(note, 120, 30)).toBe(10)

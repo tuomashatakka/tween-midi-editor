@@ -47,6 +47,26 @@ export class SynthVoice {
     }
   }
 
+  /**
+   * Let go of a sustained note with the synth's normal release, as opposed to
+   * `kill`'s abrupt 10ms fade. Used when a held MIDI key is lifted.
+   */
+  release (ctx: AudioContext) {
+    const now = ctx.currentTime
+    if (now >= this.stopTime)
+      return
+
+    try {
+      this.gain.gain.cancelScheduledValues(now)
+      this.gain.gain.setValueAtTime(this.gain.gain.value, now)
+      this.gain.gain.linearRampToValueAtTime(0, now + RELEASE)
+      this.osc.stop(now + RELEASE)
+    }
+    catch {
+      // already stopped
+    }
+  }
+
   /** Immediately silence and stop this voice (panic / transport stop). */
   kill (ctx: AudioContext) {
     const now = ctx.currentTime

@@ -1,5 +1,12 @@
 import type { AppDispatch, RootState } from '@/store/store'
-import { setTool, toggleSnap, finerGrid, coarserGrid, toggleTriplet } from '@/store/slices/toolSlice'
+import {
+  setTool,
+  toggleSnap,
+  finerGrid,
+  coarserGrid,
+  toggleTriplet,
+  toggleTrackDrawer,
+} from '@/store/slices/toolSlice'
 import { togglePlay, stop, seek, toggleLoop } from '@/store/slices/transportSlice'
 import { zoomX } from '@/store/slices/viewportSlice'
 import {
@@ -15,6 +22,7 @@ import {
   redo,
 } from '@/thunks/editingThunks'
 import { exportMidi, importMidiFile } from '@/thunks/projectThunks'
+import { toggleRecording } from '@/thunks/recordingThunks'
 import { openMidiPicker } from '@/midi/filePicker'
 
 
@@ -42,6 +50,11 @@ export const SHORTCUTS: Shortcut[] = [
       dispatch(setTool(getState().tool.active === 'draw' ? 'select' : 'draw')) },
   { key: 'escape', description: 'Select tool', run: ({ dispatch }) => dispatch(setTool('select')) },
 
+  // Panels. A bare letter, because Ctrl/Cmd+T cannot be intercepted (new tab).
+  { key:         't',
+    description: 'Toggle track drawer',
+    run:         ({ dispatch }) => dispatch(toggleTrackDrawer()) },
+
   // Transport
   { key:         ' ',
     description: 'Play / Stop',
@@ -54,6 +67,9 @@ export const SHORTCUTS: Shortcut[] = [
         dispatch(togglePlay())
     } },
   { key: 'l', mod: true, description: 'Toggle Loop', run: ({ dispatch }) => dispatch(toggleLoop()) },
+  { key: 'r', description: 'Record', run: ({ dispatch }) => dispatch(toggleRecording()) },
+  // Live's native record binding, and matchShortcut lowercases e.key.
+  { key: 'f9', description: 'Record', run: ({ dispatch }) => dispatch(toggleRecording()) },
 
   // File
   { key:         'o',

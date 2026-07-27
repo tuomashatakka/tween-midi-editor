@@ -1,14 +1,16 @@
-import type { Note } from '@/domain/types'
+import type { Note, TrackId } from '@/domain/types'
 import { ticksToSeconds } from '@/domain/time'
 import { noteRect } from '@/view/coords'
 import type { Viewport } from '@/view/coords'
 import { theme } from '@/view/theme'
 import { envelopeAt, sawtoothAt, visualCycleCount } from '@/audio/waveform'
+import type { TrackStyle } from '@/store/selectors/trackSelectors'
 
 
 export interface WaveformData {
-  notes: Note[]
-  bpm:   number
+  notes:  Note[]
+  bpm:    number
+  styles: Map<TrackId, TrackStyle>
 }
 
 const MIN_WIDTH_PX = 6 // skip notes too narrow to read
@@ -30,6 +32,9 @@ export function drawWaveform (ctx: CanvasRenderingContext2D, vp: Viewport, data:
     if (r.w < MIN_WIDTH_PX || r.x + r.w < vp.keyboardWidth || r.x > vp.width)
       continue
 
+    // Dim with the track. Without this a 50%-alpha note keeps a full-strength
+    // white overlay and reads as brighter than the active track.
+    const trackAlpha  = data.styles.get(note.trackId)?.alpha ?? 1
     const centerY     = r.y + r.h / 2
     const halfH       = (r.h - 2) / 2
     const cycles      = visualCycleCount(note, data.bpm, r.w)
@@ -54,7 +59,8 @@ export function drawWaveform (ctx: CanvasRenderingContext2D, vp: Viewport, data:
       ctx.lineTo(r.x + p * r.w, centerY + e * halfH)
     }
     ctx.closePath()
-    ctx.fillStyle = theme.waveformFill
+    ctx.globalAlpha = trackAlpha
+    ctx.fillStyle   = theme.waveformFill
     ctx.fill()
 
     // Mirrored sawtooth waveform line modulated by the envelope.
@@ -73,6 +79,7 @@ export function drawWaveform (ctx: CanvasRenderingContext2D, vp: Viewport, data:
     ctx.lineWidth   = 1
     ctx.strokeStyle = theme.waveformLine
     ctx.stroke()
+    ctx.globalAlpha = 1
   }
 
   ctx.restore()

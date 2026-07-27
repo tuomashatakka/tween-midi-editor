@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useAppSelector } from '@/store/hooks'
-import { selectAllNotes } from '@/store/selectors/noteSelectors'
+import {
+  selectTrackStyles,
+  selectVisibleNotesInPaintOrder,
+} from '@/store/selectors/trackSelectors'
+import type { TrackStyle } from '@/store/selectors/trackSelectors'
 import {
   selectViewport,
   selectVisiblePitchRange,
   selectVisibleTickRange,
 } from '@/store/selectors/viewportSelectors'
-import type { GridDivision, LoopRegion, Note, TimeSignature } from '@/domain/types'
+import type { GridDivision, LoopRegion, Note, TimeSignature, TrackId } from '@/domain/types'
 import { drawGrid } from './layers/gridLayer'
 import { drawNotes } from './layers/notesLayer'
 import { drawWaveform } from './layers/waveformLayer'
@@ -26,7 +30,8 @@ export function useCanvasRenderer (
   draftRef: React.MutableRefObject<Draft>,
 ) {
   const viewport      = useAppSelector(selectViewport)
-  const notes         = useAppSelector(selectAllNotes)
+  const notes         = useAppSelector(selectVisibleNotesInPaintOrder)
+  const trackStyles   = useAppSelector(selectTrackStyles)
   const selectedIds   = useAppSelector(s => s.selection.selectedIds)
   const positionTicks = useAppSelector(s => s.transport.positionTicks)
   const loop          = useAppSelector(s => s.transport.loop)
@@ -51,6 +56,7 @@ export function useCanvasRenderer (
     viewport,
     notes,
     selected,
+    trackStyles,
     positionTicks,
     loop,
     clipEndTicks,
@@ -66,6 +72,7 @@ export function useCanvasRenderer (
     viewport,
     notes,
     selected,
+    trackStyles,
     positionTicks,
     loop,
     clipEndTicks,
@@ -100,6 +107,7 @@ type Inputs = {
   viewport:      ReturnType<typeof selectViewport>
   notes:         Note[]
   selected:      Set<string>
+  trackStyles:   Map<TrackId, TrackStyle>
   positionTicks: number
   loop:          LoopRegion
   clipEndTicks:  number
@@ -161,10 +169,10 @@ function draw (
     visiblePitch:  inp.visiblePitch,
     clipEndTicks:  inp.clipEndTicks,
   })
-  drawNotes(ctx, vp, { notes: renderNotes, selected: inp.selected })
+  drawNotes(ctx, vp, { notes: renderNotes, selected: inp.selected, styles: inp.trackStyles })
   if (inp.showWaveform)
-    drawWaveform(ctx, vp, { notes: renderNotes, bpm: inp.bpm })
-  drawOverlay(ctx, vp, draft)
+    drawWaveform(ctx, vp, { notes: renderNotes, bpm: inp.bpm, styles: inp.trackStyles })
+  drawOverlay(ctx, vp, { draft, styles: inp.trackStyles })
   drawRuler(ctx, vp, {
     timeSignature: inp.timeSignature,
     visibleTicks:  inp.visibleTicks,

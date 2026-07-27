@@ -1,10 +1,18 @@
+import type { TrackId } from '@/domain/types'
 import { noteRect, rectFromPoints } from '@/view/coords'
 import type { Viewport } from '@/view/coords'
 import { theme } from '@/view/theme'
+import type { TrackStyle } from '@/store/selectors/trackSelectors'
 import type { Draft } from '../interactions/types'
 
 
-export function drawOverlay (ctx: CanvasRenderingContext2D, vp: Viewport, draft: Draft) {
+export interface OverlayData {
+  draft:  Draft
+  styles: Map<TrackId, TrackStyle>
+}
+
+export function drawOverlay (ctx: CanvasRenderingContext2D, vp: Viewport, data: OverlayData) {
+  const { draft } = data
   if (!draft)
     return
 
@@ -19,10 +27,22 @@ export function drawOverlay (ctx: CanvasRenderingContext2D, vp: Viewport, draft:
 
   if (draft.kind === 'draw') {
     const r = noteRect(
-      { id: '_', pitch: draft.pitch, start: draft.start, duration: draft.duration, velocity: 100 },
+      {
+        id:       '_',
+        trackId:  draft.trackId,
+        pitch:    draft.pitch,
+        start:    draft.start,
+        duration: draft.duration,
+        velocity: 100,
+      },
       vp,
     )
-    ctx.fillStyle = theme.draftNote
+    // Preview in the destination track's colour so it is obvious where the note
+    // will land.
+    const style     = data.styles.get(draft.trackId)
+    ctx.globalAlpha = 0.5
+    ctx.fillStyle   = style?.fill ?? theme.draftNote
     ctx.fillRect(r.x, r.y + 0.5, Math.max(1, r.w - 1), Math.max(1, r.h - 1))
+    ctx.globalAlpha = 1
   }
 }

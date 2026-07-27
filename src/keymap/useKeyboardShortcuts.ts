@@ -8,12 +8,15 @@ export function useKeyboardShortcuts () {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // Ignore when typing into form fields.
+      // Ignore when typing into form fields. SELECT matters too: the track
+      // drawer has channel and output dropdowns, and typing to jump through
+      // their options must not fire editor shortcuts.
       const target = e.target as HTMLElement | null
       if (
         target &&
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
           target.isContentEditable)
       )
         return

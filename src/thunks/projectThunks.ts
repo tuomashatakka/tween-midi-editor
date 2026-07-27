@@ -1,9 +1,9 @@
 import { nanoid } from '@reduxjs/toolkit'
 import { ActionCreators as UndoActions } from 'redux-undo'
 import type { AppDispatch, RootState } from '@/store/store'
-import { setAllNotes } from '@/store/slices/notesSlice'
+import { loadDocument } from '@/store/documentActions'
 import { markClean, setFileName } from '@/store/slices/projectSlice'
-import { clearSelection } from '@/store/slices/selectionSlice'
+import { clearSelection, setActiveTrack } from '@/store/slices/selectionSlice'
 import {
   seek,
   setBpm,
@@ -13,11 +13,14 @@ import {
   stop,
 } from '@/store/slices/transportSlice'
 import { setScroll } from '@/store/slices/viewportSlice'
-import { selectAllNotes } from '@/store/selectors/noteSelectors'
+import { selectExportTracks } from '@/store/selectors/trackSelectors'
 import { PPQ } from '@/domain/constants'
 import { ticksPerBar } from '@/domain/time'
+import type { Note, Track } from '@/domain/types'
 import { encodeSmf } from '@/midi/smfEncode'
 import { parseSmf } from '@/midi/smfParse'
+import { groupParsedNotesIntoTracks } from '@/midi/trackMapping'
+import { trackColorAt } from '@/view/trackPalette'
 
 
 type Thunk = (dispatch: AppDispatch, getState: () => RootState) => void
@@ -42,10 +45,28 @@ const clipEndForNotes = (
 export const importMidiData = (bytes: Uint8Array, fileName: string): Thunk =>
   (dispatch, getState) => {
     const parsed = parseSmf(bytes, PPQ)
+    const seeds  = groupParsedNotesIntoTracks(parsed)
+
+    const tracks: Track[] = seeds.map((seed, i) => ({
+      id:      nanoid(),
+      name:    seed.name,
+      color:   trackColorAt(i),
+      channel: seed.channel,
+      muted:   false,
+      soloed:  false,
+      visible: true,
+      locked:  i !== 0,
+    }))
+
+    const notes: Note[] = seeds.flatMap((seed, i) =>
+      seed.notes.map(n => ({ ...n, id: nanoid(), trackId: tracks[i].id })))
 
     dispatch(stop())
     dispatch(clearSelection())
-    dispatch(setAllNotes(parsed.notes.map(n => ({ ...n, id: nanoid() }))))
+    // Tracks and notes land in one action so no frame ever renders a note whose
+    // track is unknown, and so the import is a single history entry.
+    dispatch(loadDocument({ tracks, notes }))
+    dispatch(setActiveTrack(tracks[0].id))
 
     if (parsed.bpm !== undefined)
       dispatch(setBpm(parsed.bpm))
@@ -53,7 +74,7 @@ export const importMidiData = (bytes: Uint8Array, fileName: string): Thunk =>
       dispatch(setTimeSignature(parsed.timeSignature))
 
     const ts      = getState().transport.timeSignature
-    const lastEnd = parsed.notes.reduce((max, n) => Math.max(max, n.start + n.duration), 0)
+    const lastEnd = notes.reduce((max, n) => Math.max(max, n.start + n.duration), 0)
     const clipEnd = clipEndForNotes(lastEnd, ts)
     dispatch(setClipEnd(clipEnd))
     dispatch(setLoop({ startTicks: 0, endTicks: clipEnd }))
@@ -86,7 +107,7 @@ export const exportMidi = (): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     const bytes = encodeSmf({
-      notes:         selectAllNotes(state),
+      tracks:        selectExportTracks(state),
       bpm:           state.transport.bpm,
       timeSignature: state.transport.timeSignature,
       ppq:           PPQ,

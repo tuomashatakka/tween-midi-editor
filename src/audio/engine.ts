@@ -9,6 +9,22 @@ export const setActiveEngine = (engine: AudioEngine | null): void => {
   active = engine
 }
 
+/** The live engine, for side-effect layers that need more than a preview. */
+export const getActiveEngine = (): AudioEngine | null => active
+
 export const playPreview = (pitch: number, velocity = 100): void => {
   active?.previewNote(pitch, velocity)
+}
+
+/** Sustained live-play notes (MIDI thru), released on key-up. */
+export const previewNoteOn = (pitch: number, velocity = 100): void => {
+  active?.noteOn(pitch, velocity)
+}
+
+export const previewNoteOff = (pitch: number): void => {
+  active?.noteOff(pitch)
+}
+
+export const panicPreview = (): void => {
+  active?.panic()
 }

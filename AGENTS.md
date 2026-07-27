@@ -14,6 +14,10 @@ quick tour.
 - All application data lives in Redux Toolkit slices (`src/store/slices`) and is
   mutated **only** through reducer actions, or thunks composing them
   (`src/thunks`). Components never mutate state directly.
+- `notes` and `tracks` are one **document** under a single `redux-undo` history
+  (`state.document.present`), so deleting a track undoes together with its
+  notes. Anything that must undo in one step has to be *one* action handled by
+  both slices — see `src/store/documentActions.ts`.
 - React components are **presentational**: they read via selectors and dispatch
   actions. The `<canvas>` piano roll is a pure render of selector output.
 - Musical data is stored in **ticks** (PPQ = 960), never pixels. Pixels are derived
@@ -24,13 +28,18 @@ quick tour.
   subscribe to the store — not in components.
 
 ## Layout
-- `src/domain` — types, constants, pure time/music math.
-- `src/store` — slices, selectors, typed hooks, store wiring (`redux-undo` on notes).
-- `src/view` — pure coordinate transforms, hit-testing, theme.
-- `src/audio` — `AudioEngine`, `SynthVoice`, transport bridge, waveform helpers,
-  preview engine singleton.
-- `src/components` — `Toolbar`, `TransportControls`, `PianoRoll/` (canvas, layers,
-  interactions, renderer).
+- `src/domain` — types, constants, pure time/music/quantize math.
+- `src/store` — slices, selectors, typed hooks, store wiring (`redux-undo` on the
+  notes + tracks document), persistence middleware.
+- `src/view` — pure coordinate transforms, hit-testing, theme, track palette.
+- `src/audio` — `AudioEngine` (one lookahead scheduler fanning out to
+  `PlaybackSink`s), `SynthVoice`, `InternalSynthSink`, `MetronomeSink`,
+  `clockDomain`, transport bridge, waveform helpers, preview engine singleton.
+- `src/midi` — the SMF file codec (`smfParse`/`smfEncode`/`vlq`/`trackMapping`)
+  and, under `src/midi/io`, the live Web MIDI layer: pure `messages`/`portInfo`/
+  `clockFollower`/`NoteRecorder`, then the managers, sinks and `midiBridge`.
+- `src/components` — `Toolbar`, `TransportControls`, `TrackDrawer/`, MIDI
+  preference sections, `PianoRoll/` (canvas, layers, interactions, renderer).
 - `src/keymap` — declarative shortcut table + listener hook.
 - `electron/` — optional thin desktop wrapper.
 

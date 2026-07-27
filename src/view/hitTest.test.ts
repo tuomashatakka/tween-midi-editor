@@ -16,7 +16,7 @@ const vp: Viewport = {
   rulerHeight:   28,
 }
 
-const note: Note = { id: 'n1', pitch: 60, start: 0, duration: 960, velocity: 100 }
+const note: Note = { id: 'n1', trackId: 't1', pitch: 60, start: 0, duration: 960, velocity: 100 }
 
 describe('hit testing', () => {
   it('hits a note body', () => {
